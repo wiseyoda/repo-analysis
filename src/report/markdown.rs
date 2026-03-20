@@ -139,6 +139,50 @@ mod tests {
     }
 
     #[test]
+    fn renders_summary_section() {
+        let agg = make_agg();
+        let mut buf = Vec::new();
+        render(&agg, None, &mut buf).expect("render failed");
+        let output = String::from_utf8(buf).expect("invalid utf8");
+        assert!(output.contains("## Summary"));
+        assert!(output.contains("**Files:** 5"));
+        assert!(output.contains("**Code:** 150"));
+        assert!(output.contains("**Blank:** 30"));
+        assert!(output.contains("**Comment:** 20"));
+    }
+
+    #[test]
+    fn renders_without_diff_no_deltas() {
+        let agg = make_agg();
+        let mut buf = Vec::new();
+        render(&agg, None, &mut buf).expect("render failed");
+        let output = String::from_utf8(buf).expect("invalid utf8");
+        assert!(
+            !output.contains("(+"),
+            "should not contain delta markers without diff"
+        );
+    }
+
+    #[test]
+    fn renders_negative_diff_deltas() {
+        let agg = make_agg();
+        let diff = SnapshotDiff {
+            files_delta: -2,
+            lines_delta: crate::snapshot::diff::LinesDelta {
+                total: -10,
+                code: -8,
+                blank: -1,
+                comment: -1,
+            },
+        };
+        let mut buf = Vec::new();
+        render(&agg, Some(&diff), &mut buf).expect("render failed");
+        let output = String::from_utf8(buf).expect("invalid utf8");
+        assert!(output.contains("(-2)"));
+        assert!(output.contains("(-10)"));
+    }
+
+    #[test]
     fn renders_diff_deltas() {
         let agg = make_agg();
         let diff = SnapshotDiff {

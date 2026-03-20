@@ -150,7 +150,7 @@ See `docs/designs/phase-9-health-check.md` for full design.
 - [x] Bug fixes: AI module unit tests (skills.rs + schema.rs)
 - [x] Bug fixes: add --verbose flag with phase timing
 - [x] Bug fixes: sync Cargo.toml version to 0.9.0
-- [ ] Report module unit tests (dashboard.rs, markdown.rs, trend.rs)
+- [x] Report module unit tests (dashboard.rs, markdown.rs, trend.rs)
 - [ ] Per-file churn collection via `git log --name-only`
 - [ ] Churn + complexity risk score computation and display
 - [ ] Risk scores in snapshots (raw inputs: churn_count, max_complexity)
