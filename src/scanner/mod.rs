@@ -1,11 +1,25 @@
 //! File system scanner with gitignore-aware walking and exclusion logic.
 
+pub(crate) mod language;
+
 use std::path::{Path, PathBuf};
 
 use globset::{Glob, GlobSet, GlobSetBuilder};
 use ignore::WalkBuilder;
 
 use crate::config::Config;
+
+use self::language::Language;
+
+/// A file discovered by the scanner with its detected language.
+#[derive(Debug, Clone)]
+#[allow(dead_code)] // fields read by metrics (next task)
+pub(crate) struct ScannedFile {
+    /// Absolute path to the file.
+    pub(crate) path: PathBuf,
+    /// Detected programming language, if recognized.
+    pub(crate) language: Option<Language>,
+}
 
 /// Directories excluded by built-in heuristics (Layer 2 of ADR-005).
 const HEURISTIC_EXCLUDES: &[&str] = &[
@@ -41,12 +55,12 @@ pub(crate) enum ScanError {
 /// Layer 2: Built-in heuristic directory exclusions.
 /// Layer 3: Config-based `exclude_patterns` / `include_patterns`.
 ///
-/// Returns a sorted list of regular file paths.
-pub(crate) fn scan(dir: &Path, config: &Config) -> Result<Vec<PathBuf>, ScanError> {
+/// Returns a sorted list of scanned files with detected languages.
+pub(crate) fn scan(dir: &Path, config: &Config) -> Result<Vec<ScannedFile>, ScanError> {
     let exclude_set = build_glob_set(&config.exclude_patterns)?;
     let include_set = build_glob_set(&config.include_patterns)?;
 
-    let mut files: Vec<PathBuf> = WalkBuilder::new(dir)
+    let mut files: Vec<ScannedFile> = WalkBuilder::new(dir)
         .hidden(false)
         .filter_entry(|entry| !is_heuristic_excluded(entry.file_name()))
         .build()
@@ -54,9 +68,13 @@ pub(crate) fn scan(dir: &Path, config: &Config) -> Result<Vec<PathBuf>, ScanErro
         .filter(|entry| entry.file_type().is_some_and(|ft| ft.is_file()))
         .map(|entry| entry.into_path())
         .filter(|path| passes_config_filter(path, dir, &exclude_set, &include_set))
+        .map(|path| {
+            let language = Language::detect(&path);
+            ScannedFile { path, language }
+        })
         .collect();
 
-    files.sort();
+    files.sort_by(|a, b| a.path.cmp(&b.path));
     Ok(files)
 }
 
@@ -129,9 +147,9 @@ mod tests {
         let files = scan(dir.path(), &config).unwrap();
 
         assert_eq!(files.len(), 3);
-        assert!(files.iter().any(|p| p.ends_with("a.rs")));
-        assert!(files.iter().any(|p| p.ends_with("b.rs")));
-        assert!(files.iter().any(|p| p.ends_with("sub/c.rs")));
+        assert!(files.iter().any(|f| f.path.ends_with("a.rs")));
+        assert!(files.iter().any(|f| f.path.ends_with("b.rs")));
+        assert!(files.iter().any(|f| f.path.ends_with("sub/c.rs")));
     }
 
     #[test]
@@ -153,7 +171,7 @@ mod tests {
 
         let names: Vec<_> = files
             .iter()
-            .filter_map(|p| p.file_name())
+            .filter_map(|f| f.path.file_name())
             .map(|n| n.to_string_lossy().to_string())
             .collect();
         assert!(names.contains(&"keep.rs".to_string()));
@@ -172,7 +190,7 @@ mod tests {
         let config = Config::default();
         let files = scan(dir.path(), &config).unwrap();
 
-        let paths: Vec<String> = files.iter().map(|p| p.display().to_string()).collect();
+        let paths: Vec<String> = files.iter().map(|f| f.path.display().to_string()).collect();
         assert!(
             paths.iter().any(|p| p.contains("main.rs")),
             "should include src/main.rs"
@@ -207,7 +225,7 @@ mod tests {
         };
         let files = scan(dir.path(), &config).unwrap();
 
-        let paths: Vec<String> = files.iter().map(|p| p.display().to_string()).collect();
+        let paths: Vec<String> = files.iter().map(|f| f.path.display().to_string()).collect();
         assert!(paths.iter().any(|p| p.contains("main.rs")));
         assert!(!paths.iter().any(|p| p.contains("generated")));
     }
@@ -224,7 +242,7 @@ mod tests {
         };
         let files = scan(dir.path(), &config).unwrap();
 
-        let paths: Vec<String> = files.iter().map(|p| p.display().to_string()).collect();
+        let paths: Vec<String> = files.iter().map(|f| f.path.display().to_string()).collect();
         assert!(
             paths.iter().any(|p| p.contains("keep.rs")),
             "include should override exclude"
@@ -244,7 +262,7 @@ mod tests {
         let config = Config::default();
         let files = scan(dir.path(), &config).unwrap();
 
-        assert!(files.iter().all(|p| p.is_file()));
+        assert!(files.iter().all(|f| f.path.is_file()));
     }
 
     #[test]
@@ -257,12 +275,10 @@ mod tests {
         let config = Config::default();
         let files = scan(dir.path(), &config).unwrap();
 
-        let sorted: Vec<_> = {
-            let mut v = files.clone();
-            v.sort();
-            v
-        };
-        assert_eq!(files, sorted, "results should be sorted");
+        let paths: Vec<_> = files.iter().map(|f| &f.path).collect();
+        let mut sorted = paths.clone();
+        sorted.sort();
+        assert_eq!(paths, sorted, "results should be sorted");
     }
 
     #[test]
@@ -271,5 +287,25 @@ mod tests {
         let config = Config::default();
         let files = scan(dir.path(), &config).unwrap();
         assert!(files.is_empty());
+    }
+
+    #[test]
+    fn populates_language_for_known_extensions() {
+        let dir = TempDir::new().unwrap();
+        create_file(dir.path(), "main.rs");
+        create_file(dir.path(), "app.py");
+        create_file(dir.path(), "data.xyz");
+
+        let config = Config::default();
+        let files = scan(dir.path(), &config).unwrap();
+
+        let rs = files.iter().find(|f| f.path.ends_with("main.rs")).unwrap();
+        assert_eq!(rs.language, Some(language::Language::Rust));
+
+        let py = files.iter().find(|f| f.path.ends_with("app.py")).unwrap();
+        assert_eq!(py.language, Some(language::Language::Python));
+
+        let unknown = files.iter().find(|f| f.path.ends_with("data.xyz")).unwrap();
+        assert_eq!(unknown.language, None);
     }
 }
