@@ -1,29 +1,98 @@
 ---
 name: test
-description: Run the full test suite with formatting and linting checks
+version: 1.0.0
+description: |
+  Run the full quality gate for repostat: fmt, clippy, test. Shows structured
+  pass/fail results. Use when asked to "test", "check tests", or "run the suite".
+  For quick pass/fail only, use /check instead.
 disable-model-invocation: true
 user-invocable: true
-allowed-tools: Bash(cargo *), Read, Grep
+allowed-tools:
+  - Bash(cargo *)
+  - Bash(wc *)
+  - Read
+  - Grep
+  - Glob
 ---
 
-Run the full quality gate for repostat:
+## Arguments
 
-1. **Format check**: `cargo fmt --check`
-   - If it fails, run `cargo fmt` to fix, then show what changed.
+- `/test` — run all tests with full quality gate
+- `/test <name>` — run only tests matching `<name>` (passed to `cargo test <name>`)
+- `/test --unit` — run only unit tests (`cargo test --lib`)
+- `/test --integration` — run only integration tests (`cargo test --test '*'`)
 
-2. **Lint check**: `cargo clippy -- -D warnings`
-   - If it fails, fix all warnings. No exceptions.
+## Preconditions
 
-3. **Test suite**: `cargo test`
-   - Run all unit and integration tests.
-   - If any fail, analyze the failure and report:
-     - Which test failed
-     - Expected vs actual
-     - The relevant source code
+Check before running. Abort if any fail.
 
-4. **Summary**: Report pass/fail for each step.
+```bash
+[ -f Cargo.toml ] && echo "CARGO_OK" || echo "NO_CARGO"
+```
 
-If $ARGUMENTS contains a specific test name or module, run only that:
-`cargo test $ARGUMENTS`
+**If NO_CARGO:** "No Cargo.toml found. Are you in the project root?" — STOP.
 
-Always follow the project coding standard in `docs/coding-standard.md`.
+## Steps
+
+### Step 1: Format Check
+
+```bash
+cargo fmt --check 2>&1
+```
+
+If it fails, run `cargo fmt` to fix, then show what changed with `cargo fmt --check` again.
+
+### Step 2: Lint Check
+
+```bash
+cargo clippy -- -D warnings 2>&1
+```
+
+If it fails, show the warnings grouped by file. For each warning, show:
+- File:line
+- Warning message
+- Suggested fix (from clippy)
+
+Do NOT auto-fix clippy warnings. Report them for the user to decide.
+
+### Step 3: Test Suite
+
+Based on $ARGUMENTS:
+- No args: `cargo test 2>&1`
+- `--unit`: `cargo test --lib 2>&1`
+- `--integration`: `cargo test --test '*' 2>&1`
+- Other: `cargo test $ARGUMENTS 2>&1`
+
+If any test fails, for each failure report:
+- Test name and location (file:line)
+- Expected vs actual values
+- Relevant source code context (read the test file)
+
+### Step 4: Completion Summary
+
+```
++======================================+
+|        QUALITY GATE RESULTS          |
++======================================+
+| Check    | Status | Details          |
+|----------|--------|------------------|
+| fmt      | PASS   |                  |
+| clippy   | PASS   | 0 warnings       |
+| test     | PASS   | 42 passed, 0 fail|
++--------------------------------------+
+| VERDICT: GATE PASSED                 |
++======================================+
+```
+
+If any step failed:
+```
+| VERDICT: GATE FAILED — fix clippy   |
+```
+
+## Important Rules
+
+1. **Never skip steps.** All three checks run even if one fails — the user needs the full picture.
+2. **Never auto-fix clippy.** Report warnings with suggestions, let the user decide.
+3. **Auto-fix formatting.** If `cargo fmt --check` fails, run `cargo fmt` and report what changed.
+4. **Show test count.** Always report total tests run, passed, failed.
+5. **Read failing test source.** When a test fails, read the test file to provide context.
