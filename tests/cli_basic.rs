@@ -20,8 +20,15 @@ fn prints_version_without_error() {
 }
 
 #[test]
-fn exits_successfully_without_arguments() {
-    repostat().assert().success();
+fn exits_without_tool_error() {
+    // May exit 0 (healthy), 10 (warning), or 20 (critical) — all valid.
+    // Exit 1 or 2 would be a tool error.
+    let output = repostat().output().expect("failed to run");
+    let code = output.status.code().unwrap_or(1);
+    assert!(
+        code == 0 || code == 10 || code == 20,
+        "expected health exit code, got {code}",
+    );
 }
 
 #[test]
@@ -56,7 +63,13 @@ fn errors_when_path_is_a_file() {
 
 #[test]
 fn defaults_to_current_directory() {
-    repostat().assert().success();
+    // Analyzing current dir may trigger health exit codes (10/20)
+    let output = repostat().output().expect("failed to run");
+    let code = output.status.code().unwrap_or(1);
+    assert!(
+        code == 0 || code == 10 || code == 20,
+        "expected health exit code, got {code}",
+    );
 }
 
 #[test]
