@@ -147,7 +147,7 @@ See `docs/designs/phase-9-health-check.md` for full design.
 - [x] Bug fixes: corrupt snapshot friendly error + silent index write warning
 - [x] Bug fixes: warn when 0 files analyzed after filtering
 - [x] Bug fixes: integration test speed (REPOSTAT_SKIP_AI env var)
-- [ ] Bug fixes: AI module unit tests (skills.rs + schema.rs)
+- [x] Bug fixes: AI module unit tests (skills.rs + schema.rs)
 - [ ] Bug fixes: add --verbose flag with phase timing
 - [ ] Bug fixes: sync Cargo.toml version to 0.9.0
 - [ ] Report module unit tests (dashboard.rs, markdown.rs, trend.rs)
