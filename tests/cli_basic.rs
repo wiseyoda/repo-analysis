@@ -2,43 +2,37 @@ use assert_cmd::Command;
 use predicates::prelude::*;
 use tempfile::TempDir;
 
+/// Create a repostat command with AI disabled for fast tests.
+fn repostat() -> Command {
+    let mut cmd = Command::cargo_bin("repostat").unwrap();
+    cmd.env("REPOSTAT_SKIP_AI", "1");
+    cmd
+}
+
 #[test]
 fn prints_help_without_error() {
-    Command::cargo_bin("repostat")
-        .unwrap()
-        .arg("--help")
-        .assert()
-        .success();
+    repostat().arg("--help").assert().success();
 }
 
 #[test]
 fn prints_version_without_error() {
-    Command::cargo_bin("repostat")
-        .unwrap()
-        .arg("--version")
-        .assert()
-        .success();
+    repostat().arg("--version").assert().success();
 }
 
 #[test]
 fn exits_successfully_without_arguments() {
-    Command::cargo_bin("repostat").unwrap().assert().success();
+    repostat().assert().success();
 }
 
 #[test]
 fn accepts_valid_directory_path() {
     let dir = TempDir::new().unwrap();
-    Command::cargo_bin("repostat")
-        .unwrap()
-        .arg(dir.path())
-        .assert()
-        .success();
+    repostat().arg(dir.path()).assert().success();
 }
 
 #[test]
 fn errors_on_nonexistent_path() {
-    Command::cargo_bin("repostat")
-        .unwrap()
+    repostat()
         .arg("/tmp/repostat-nonexistent-path-abc123")
         .assert()
         .failure()
@@ -52,8 +46,7 @@ fn errors_when_path_is_a_file() {
     let file_path = dir.path().join("not-a-dir.txt");
     std::fs::write(&file_path, "hello").unwrap();
 
-    Command::cargo_bin("repostat")
-        .unwrap()
+    repostat()
         .arg(&file_path)
         .assert()
         .failure()
@@ -63,15 +56,13 @@ fn errors_when_path_is_a_file() {
 
 #[test]
 fn defaults_to_current_directory() {
-    // Running without args should succeed (uses cwd)
-    Command::cargo_bin("repostat").unwrap().assert().success();
+    repostat().assert().success();
 }
 
 #[test]
 fn warns_on_empty_directory() {
     let dir = TempDir::new().unwrap();
-    Command::cargo_bin("repostat")
-        .unwrap()
+    repostat()
         .arg(dir.path())
         .assert()
         .success()
