@@ -27,6 +27,13 @@ fn main() {
         cli::ValidatedCommand::Analyze(args) => run_analyze(&args),
         cli::ValidatedCommand::Trend(args) => run_trend(&args.path),
         cli::ValidatedCommand::List => run_list(),
+        cli::ValidatedCommand::Completions(shell) => cli::generate_completions(shell),
+        cli::ValidatedCommand::Manpage => {
+            if let Err(e) = cli::generate_manpage() {
+                eprintln!("error: failed to generate man page: {e}");
+                process::exit(2);
+            }
+        }
     }
 }
 

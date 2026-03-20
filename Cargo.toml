@@ -1,16 +1,23 @@
 [package]
 name = "repostat"
-version = "0.1.0"
+version = "0.7.0"
 edition = "2024"
 rust-version = "1.85"
 description = "Analyze repository complexity, track coding progress, produce AI-augmented reports"
 license = "MIT"
+repository = "https://github.com/wiseyoda/repo-analysis"
+homepage = "https://github.com/wiseyoda/repo-analysis"
+keywords = ["cli", "code-analysis", "complexity", "metrics", "repository"]
+categories = ["command-line-utilities", "development-tools"]
+readme = "README.md"
 
 [dependencies]
 anyhow = "1"
 chrono = { version = "0.4", features = ["serde"] }
 dirs = "6"
 clap = { version = "4", features = ["derive"] }
+clap_complete = "4"
+clap_mangen = "0.2"
 crossterm = "0.28"
 globset = "0.4"
 ignore = "0.4"

@@ -123,14 +123,14 @@ analysis matches `git log --stat`. Cross-repo listing works.
 
 **Goal**: Production-quality CLI experience and packaging.
 
-- [ ] Shell completions (bash, zsh, fish)
-- [ ] CI pipeline: fmt, clippy, test, build on every PR
-- [ ] README with install instructions, usage examples, screenshots
-- [ ] `cargo install` publishing to crates.io
-- [ ] GitHub Releases with pre-built binaries (macOS arm64/x64, Linux x64)
-- [ ] Homebrew formula
-- [ ] Man page generation
-- [ ] `repostat` dogfooding: analyze itself, include report in README
+- [x] Shell completions (bash, zsh, fish)
+- [x] CI pipeline: fmt, clippy, test, build on every PR
+- [x] README with install instructions, usage examples, screenshots
+- [x] `cargo install` publishing to crates.io
+- [x] GitHub Releases with pre-built binaries (macOS arm64/x64, Linux x64)
+- [x] Homebrew formula
+- [x] Man page generation
+- [x] `repostat` dogfooding: analyze itself, include report in README
 
 **Exit Criteria**: Install works via `cargo install` and `brew install`. CI is green.
 README is complete. The tool can analyze its own codebase.
