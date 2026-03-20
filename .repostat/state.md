@@ -4,32 +4,28 @@
 
 ## Current Task
 
-- **Phase:** 1
-- **Task:** Phase complete — all 15 tasks done
-- **Status:** idle
+- **Phase:** 2
+- **Task:** Tree-sitter integration and grammar compilation (top 10 languages)
+- **Status:** in-progress
 - **Blocker:** none
-- **Started:** —
+- **Started:** 2026-03-19
 
 ## Progress
 
 ### Phase 1: Foundation & Core Metrics
-- [x] Project scaffold — completed 2026-03-19
-- [x] CLI argument parsing — completed 2026-03-19
-- [x] Config file loading — completed 2026-03-19
-- [x] File scanner — completed 2026-03-19
-- [x] Language detection — completed 2026-03-19
-- [x] Line counting engine — completed 2026-03-19
-- [x] Generated/minified detection — completed 2026-03-19
-- [x] Metric aggregation — completed 2026-03-19
-- [x] Snapshot storage — completed 2026-03-19
-- [x] Snapshot diffing — completed 2026-03-19
-- [x] Terminal dashboard — completed 2026-03-19
-- [x] --json flag — completed 2026-03-19
-- [x] --markdown flag — completed 2026-03-19
-- [x] Parallel processing (rayon) — completed 2026-03-19
-- [x] Color support (NO_COLOR) — completed 2026-03-19
+- [x] All 15 tasks — completed 2026-03-19 (shipped as v0.2.0, PR #1 merged)
 
-### Phase 2–7
+### Phase 2: Complexity Analysis
+- [ ] Tree-sitter integration and grammar compilation (top 10 languages)
+- [ ] Cyclomatic complexity calculation per function and per file
+- [ ] Cognitive complexity calculation (nested-logic weighting)
+- [ ] Function extraction: name, line count, complexity per function
+- [ ] File size and function size threshold flagging
+- [ ] Complexity hotspots section in the dashboard (top N worst)
+- [ ] Regex fallback for unsupported languages
+- [ ] Complexity data in snapshots for trend tracking
+
+### Phase 3–7
 - [ ] Not started
 
 ## Learnings
@@ -45,5 +41,4 @@
 
 | Date | Tasks Completed | Notes |
 |------|----------------|-------|
-| 2026-03-19 | Tasks 1-5 | Scaffold, CLI, config, scanner, language detection |
-| 2026-03-19 | Tasks 6-15 | LOC, filters, aggregation, snapshots, dashboard, JSON, markdown, rayon, color |
+| 2026-03-19 | Phase 1 (15 tasks) | Shipped as v0.2.0, PR #1 merged |

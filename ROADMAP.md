@@ -33,7 +33,7 @@ for 50k lines), and the dashboard is readable. Snapshots persist and diffs displ
 
 **Goal**: Tree-sitter powered cyclomatic and cognitive complexity. Hotspot identification.
 
-- [ ] Tree-sitter integration and grammar compilation (top 10 languages)
+- [x] Tree-sitter integration and grammar compilation (top 10 languages)
 - [ ] Cyclomatic complexity calculation per function and per file
 - [ ] Cognitive complexity calculation (nested-logic weighting)
 - [ ] Function extraction: name, line count, complexity per function
