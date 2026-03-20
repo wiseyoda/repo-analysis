@@ -8,7 +8,7 @@
 **Goal**: `repostat ./path` produces accurate line counts, language breakdown, and file
 statistics with a terminal dashboard. Snapshots are stored and diffed.
 
-- [ ] Project scaffold: `Cargo.toml`, module structure, CI config
+- [x] Project scaffold: `Cargo.toml`, module structure, CI config
 - [ ] CLI argument parsing with `clap` (path argument, `--help`, `--version`)
 - [ ] `.repostat.toml` config file loading and validation
 - [ ] File scanner: recursive walk with gitignore + heuristic + config exclusions

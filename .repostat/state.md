@@ -5,7 +5,7 @@
 ## Current Task
 
 - **Phase:** 1
-- **Task:** Project scaffold: `Cargo.toml`, module structure, CI config
+- **Task:** CLI argument parsing with `clap` (path argument, `--help`, `--version`)
 - **Status:** idle
 - **Blocker:** none
 - **Started:** —
@@ -13,7 +13,7 @@
 ## Progress
 
 ### Phase 1: Foundation & Core Metrics
-- [ ] Project scaffold: `Cargo.toml`, module structure, CI config
+- [x] Project scaffold: `Cargo.toml`, module structure, CI config — completed 2026-03-19
 - [ ] CLI argument parsing with `clap` (path argument, `--help`, `--version`)
 - [ ] `.repostat.toml` config file loading and validation
 - [ ] File scanner: recursive walk with gitignore + heuristic + config exclusions
@@ -36,10 +36,11 @@
 
 > Things discovered during implementation that future sessions need to know.
 
-(none yet)
+- 2026-03-19: Rust 1.93.1 on this machine; edition 2024 compiles without issues.
 
 ## Session Log
 
 | Date | Tasks Completed | Notes |
 |------|----------------|-------|
 | — | — | Project initialized with docs and .claude config |
+| 2026-03-19 | Project scaffold | Cargo.toml, 9 source files, CI config, 3 integration tests. Quality gate passes. |
