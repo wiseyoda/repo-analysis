@@ -112,6 +112,72 @@ pub(crate) fn cognitive_complexity(
     })
 }
 
+/// Information about a single function extracted from the AST.
+#[derive(Debug, Clone)]
+pub(crate) struct FunctionInfo {
+    /// Function name.
+    pub(crate) name: String,
+    /// Number of lines the function spans.
+    pub(crate) line_count: usize,
+    /// Cyclomatic complexity of this function.
+    pub(crate) cyclomatic: usize,
+    /// Cognitive complexity of this function.
+    pub(crate) cognitive: usize,
+}
+
+/// Extract all functions from source code with their metrics.
+pub(crate) fn extract_functions(content: &str, language: Language) -> Option<Vec<FunctionInfo>> {
+    let tree = parse(content, language)?;
+    let root = tree.root_node();
+    let source = content.as_bytes();
+    let mut functions = Vec::new();
+    collect_functions(root, source, &mut functions);
+    Some(functions)
+}
+
+/// Recursively collect function info from the AST.
+fn collect_functions(node: Node, source: &[u8], out: &mut Vec<FunctionInfo>) {
+    if is_function_node(node.kind()) {
+        let name = extract_function_name(node, source);
+        let start_line = node.start_position().row;
+        let end_line = node.end_position().row;
+        let line_count = end_line - start_line + 1;
+        let cyclomatic = 1 + count_decision_points(node, source);
+        let cognitive = cognitive_score(node, 0);
+
+        out.push(FunctionInfo {
+            name,
+            line_count,
+            cyclomatic,
+            cognitive,
+        });
+        return;
+    }
+
+    let child_count = node.child_count();
+    for i in 0..child_count {
+        if let Some(child) = node.child(i) {
+            collect_functions(child, source, out);
+        }
+    }
+}
+
+/// Extract the function name from a function node.
+fn extract_function_name(node: Node, source: &[u8]) -> String {
+    // Look for a "name" or "identifier" child
+    for i in 0..node.child_count() {
+        if let Some(child) = node.child(i) {
+            match child.kind() {
+                "identifier" | "name" | "property_identifier" => {
+                    return child.utf8_text(source).unwrap_or("<unknown>").to_string();
+                }
+                _ => {}
+            }
+        }
+    }
+    "<anonymous>".to_string()
+}
+
 /// Recursively find functions and compute cognitive complexity.
 fn collect_cognitive_complexities(node: Node, total: &mut usize, count: &mut usize) {
     if is_function_node(node.kind()) {
@@ -543,5 +609,59 @@ fn check(x: i32, y: i32) {
             "nested Python ifs should have cognitive >= 3, got {}",
             result.total
         );
+    }
+
+    // --- Function extraction tests ---
+
+    #[test]
+    fn extracts_rust_functions() {
+        let code = r#"
+fn hello() { println!("hi"); }
+fn world() {
+    if true {
+        return;
+    }
+}
+"#;
+        let funcs = extract_functions(code, Language::Rust).unwrap();
+        assert_eq!(funcs.len(), 2);
+        assert_eq!(funcs[0].name, "hello");
+        assert_eq!(funcs[1].name, "world");
+    }
+
+    #[test]
+    fn function_has_line_count() {
+        let code = "fn multi() {\n    let a = 1;\n    let b = 2;\n    let c = 3;\n}\n";
+        let funcs = extract_functions(code, Language::Rust).unwrap();
+        assert_eq!(funcs.len(), 1);
+        assert!(
+            funcs[0].line_count >= 4,
+            "multi-line function should have 4+ lines, got {}",
+            funcs[0].line_count
+        );
+    }
+
+    #[test]
+    fn function_has_complexity_scores() {
+        let code = "fn check(x: i32) { if x > 0 { return; } }";
+        let funcs = extract_functions(code, Language::Rust).unwrap();
+        assert_eq!(funcs.len(), 1);
+        assert_eq!(funcs[0].cyclomatic, 2);
+        assert!(funcs[0].cognitive >= 1);
+    }
+
+    #[test]
+    fn extracts_python_functions() {
+        let code = "def hello():\n    pass\ndef world():\n    pass\n";
+        let funcs = extract_functions(code, Language::Python).unwrap();
+        assert_eq!(funcs.len(), 2);
+        assert_eq!(funcs[0].name, "hello");
+        assert_eq!(funcs[1].name, "world");
+    }
+
+    #[test]
+    fn extract_returns_none_for_unsupported() {
+        let result = extract_functions("SELECT 1;", Language::SQL);
+        assert!(result.is_none());
     }
 }
