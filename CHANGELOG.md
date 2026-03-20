@@ -7,6 +7,17 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-03-20
+
+### Added
+- Dependency manifest parser for 8 ecosystems (Cargo.toml, package.json, requirements.txt, Pipfile, go.mod, Gemfile, pom.xml, build.gradle)
+- Direct dependency counting per manifest with project-wide totals
+- Transitive dependency counting from lock files (Cargo.lock, package-lock.json, yarn.lock, go.sum, Gemfile.lock, poetry.lock)
+- Internal coupling analysis: import/require/use statement parsing for 8+ languages
+- Fan-in / fan-out metrics per module from the coupling graph
+- Dependencies section in terminal dashboard showing manifest counts and dep totals
+- Dependency and coupling data stored in JSON snapshots for trend tracking
+
 ## [0.3.0] - 2026-03-20
 
 ### Added
