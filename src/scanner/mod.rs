@@ -1,5 +1,6 @@
 //! File system scanner with gitignore-aware walking and exclusion logic.
 
+pub(crate) mod filter;
 pub(crate) mod language;
 
 use std::path::{Path, PathBuf};
@@ -13,12 +14,15 @@ use self::language::Language;
 
 /// A file discovered by the scanner with its detected language.
 #[derive(Debug, Clone)]
-#[allow(dead_code)] // fields read by metrics (next task)
 pub(crate) struct ScannedFile {
     /// Absolute path to the file.
     pub(crate) path: PathBuf,
     /// Detected programming language, if recognized.
     pub(crate) language: Option<Language>,
+    /// Whether the file appears to be minified (avg line > 200 chars).
+    pub(crate) is_minified: bool,
+    /// Whether the file appears to be auto-generated (header markers).
+    pub(crate) is_generated: bool,
 }
 
 /// Directories excluded by built-in heuristics (Layer 2 of ADR-005).
@@ -70,7 +74,15 @@ pub(crate) fn scan(dir: &Path, config: &Config) -> Result<Vec<ScannedFile>, Scan
         .filter(|path| passes_config_filter(path, dir, &exclude_set, &include_set))
         .map(|path| {
             let language = Language::detect(&path);
-            ScannedFile { path, language }
+            let content = std::fs::read_to_string(&path).unwrap_or_default();
+            let is_minified = filter::is_minified(&content);
+            let is_generated = filter::is_generated(&content);
+            ScannedFile {
+                path,
+                language,
+                is_minified,
+                is_generated,
+            }
         })
         .collect();
 

@@ -37,6 +37,7 @@ fn main() {
 
     let _file_metrics: Vec<_> = files
         .iter()
+        .filter(|f| !f.is_minified && !f.is_generated)
         .filter_map(|f| {
             let content = std::fs::read_to_string(&f.path).ok()?;
             Some(metrics::loc::count_lines(&content, f.language))
