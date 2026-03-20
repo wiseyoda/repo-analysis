@@ -8,21 +8,21 @@
 **Goal**: `repostat ./path` produces accurate line counts, language breakdown, and file
 statistics with a terminal dashboard. Snapshots are stored and diffed.
 
-- [ ] Project scaffold: `Cargo.toml`, module structure, CI config
-- [ ] CLI argument parsing with `clap` (path argument, `--help`, `--version`)
-- [ ] `.repostat.toml` config file loading and validation
-- [ ] File scanner: recursive walk with gitignore + heuristic + config exclusions
-- [ ] Language detection from file extensions (50+ languages)
-- [ ] Line counting engine: code, comments, blanks — per file, per language
-- [ ] Generated/minified file detection and exclusion
-- [ ] Metric aggregation: totals, per-language breakdowns, file counts
-- [ ] Snapshot storage: write JSON to `.repostat/snapshots/`
-- [ ] Snapshot diffing: compare current run to most recent snapshot
-- [ ] Terminal dashboard: compact box-drawn output with all Phase 1 metrics
-- [ ] `--json` flag for machine-readable output
-- [ ] `--markdown` flag for report generation
-- [ ] Parallel file processing with `rayon`
-- [ ] Color support with `NO_COLOR` respect
+- [x] Project scaffold: `Cargo.toml`, module structure, CI config
+- [x] CLI argument parsing with `clap` (path argument, `--help`, `--version`)
+- [x] `.repostat.toml` config file loading and validation
+- [x] File scanner: recursive walk with gitignore + heuristic + config exclusions
+- [x] Language detection from file extensions (50+ languages)
+- [x] Line counting engine: code, comments, blanks — per file, per language
+- [x] Generated/minified file detection and exclusion
+- [x] Metric aggregation: totals, per-language breakdowns, file counts
+- [x] Snapshot storage: write JSON to `.repostat/snapshots/`
+- [x] Snapshot diffing: compare current run to most recent snapshot
+- [x] Terminal dashboard: compact box-drawn output with all Phase 1 metrics
+- [x] `--json` flag for machine-readable output
+- [x] `--markdown` flag for report generation
+- [x] Parallel file processing with `rayon`
+- [x] Color support with `NO_COLOR` respect
 
 **Exit Criteria**: Run `repostat ./path` on 3+ real repos. Output is accurate, fast (<2s
 for 50k lines), and the dashboard is readable. Snapshots persist and diffs display.

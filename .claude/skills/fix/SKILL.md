@@ -1,6 +1,6 @@
 ---
 name: fix
-version: 1.0.0
+version: 2.0.0
 description: |
   Debugger workflow. Reproduce issue, write a failing regression test, implement
   the minimal fix, verify, commit. Use when asked to "fix", "debug", "investigate",
@@ -136,24 +136,9 @@ INNEREOF
 
 ---
 
-## Step 6: Completion Summary
+## Step 6: Completion
 
-```
-+====================================================+
-|              BUG FIX SUMMARY                        |
-+====================================================+
-| Bug          | <description>                        |
-| Root cause   | <what was wrong>                     |
-| Fix          | <what changed>                       |
-+----------------------------------------------------+
-| Files changed  | N                                  |
-| Lines changed  | +M / -K                            |
-| Regression test| <test name>                        |
-+----------------------------------------------------+
-| Quality gate   | PASS                               |
-| Commit         | <sha>                              |
-+====================================================+
-```
+When the fix passes the quality gate and is committed, the skill is done. Do NOT print a summary box.
 
 ---
 

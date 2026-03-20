@@ -1,6 +1,6 @@
 ---
 name: check
-version: 1.0.0
+version: 2.0.0
 description: |
   Quick pass/fail quality gate — fmt, clippy, test in one command. Returns a
   one-screen summary. For detailed analysis, use /test instead.
@@ -36,17 +36,7 @@ cargo test 2>&1; echo "EXIT:$?"
 
 ## Output
 
-```
-+======================================+
-|        QUALITY GATE                  |
-+======================================+
-| fmt      PASS/FAIL                   |
-| clippy   PASS/FAIL (N warnings)      |
-| test     PASS/FAIL (N pass, M fail)  |
-+--------------------------------------+
-| GATE: PASSED / FAILED               |
-+======================================+
-```
+Output a single line: `Quality gate: PASS` or `Quality gate: FAIL (<which step failed>)`
 
 If anything fails, show the first 5 errors for that check. Do not auto-fix — just report.
 Suggest: "Run `/test` for detailed analysis and fixes."

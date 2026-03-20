@@ -1,6 +1,6 @@
 ---
 name: refactor
-version: 1.0.0
+version: 2.0.0
 description: |
   Refactor code while preserving all behavior. Tests must pass after every change.
   Includes self-regulation to stop before making things worse. Use when asked to
@@ -120,35 +120,9 @@ cargo fmt --check && cargo clippy -- -D warnings && cargo test
 
 All three must pass. Fix any formatting issues.
 
-## Step 5: Completion Summary
+## Step 5: Completion
 
-```
-+====================================================+
-|            REFACTORING SUMMARY                      |
-+====================================================+
-| Target       | <what was refactored>                |
-| Changes      | N applied, M reverted                |
-| WTF score    | X%                                   |
-+----------------------------------------------------+
-| BEFORE                | AFTER                       |
-|-----------------------|-----------------------------|
-| Largest file: 420 ln  | Largest file: 280 ln        |
-| Longest fn:   67 ln   | Longest fn:    38 ln        |
-| Total lines:  2,100   | Total lines:   1,950        |
-| Tests:        42      | Tests:         42           |
-+----------------------------------------------------+
-| Changes applied:                                    |
-|  1. Extracted parse_config() from main() (67→38 ln) |
-|  2. Replaced String params with &str in scanner     |
-|  3. Deleted dead code in metrics/loc.rs (-23 lines) |
-+----------------------------------------------------+
-| fmt:    PASS                                        |
-| clippy: PASS                                        |
-| tests:  PASS (42 passed, 0 failed)                  |
-+----------------------------------------------------+
-| VERDICT: REFACTORING COMPLETE                       |
-+====================================================+
-```
+When refactoring is complete and tests pass, the skill is done. Do NOT print a summary box.
 
 ## Important Rules
 

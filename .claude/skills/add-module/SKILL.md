@@ -1,6 +1,6 @@
 ---
 name: add-module
-version: 1.0.0
+version: 2.0.0
 description: |
   Scaffold a new module following project structure conventions from tech-stack.md.
   Creates files, wires up mod.rs, adds test scaffolding. Use when asked to "create
@@ -116,26 +116,9 @@ cargo test 2>&1
 
 Both must pass. The placeholder test confirms the module compiles.
 
-## Step 4: Completion Summary
+## Step 4: Completion
 
-```
-+====================================================+
-|           MODULE CREATED                            |
-+====================================================+
-| Module    | <name>                                  |
-| Location  | src/<parent>/<name>/                    |
-| Req IDs   | R-NNN (if applicable)                   |
-+----------------------------------------------------+
-| Files created:                                      |
-|   src/<parent>/<name>/mod.rs                        |
-|   src/<parent>/<name>/<impl>.rs                     |
-| Files modified:                                     |
-|   src/<parent>/mod.rs (added mod declaration)       |
-+----------------------------------------------------+
-| cargo check: PASS                                   |
-| cargo test:  PASS                                   |
-+====================================================+
-```
+When the module compiles and tests pass, the skill is done. Do NOT print a summary box.
 
 ## Important Rules
 

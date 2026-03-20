@@ -5,7 +5,7 @@
 ## Current Task
 
 - **Phase:** 1
-- **Task:** Project scaffold: `Cargo.toml`, module structure, CI config
+- **Task:** Phase complete — all 15 tasks done
 - **Status:** idle
 - **Blocker:** none
 - **Started:** —
@@ -13,33 +13,37 @@
 ## Progress
 
 ### Phase 1: Foundation & Core Metrics
-- [ ] Project scaffold: `Cargo.toml`, module structure, CI config
-- [ ] CLI argument parsing with `clap` (path argument, `--help`, `--version`)
-- [ ] `.repostat.toml` config file loading and validation
-- [ ] File scanner: recursive walk with gitignore + heuristic + config exclusions
-- [ ] Language detection from file extensions (50+ languages)
-- [ ] Line counting engine: code, comments, blanks — per file, per language
-- [ ] Generated/minified file detection and exclusion
-- [ ] Metric aggregation: totals, per-language breakdowns, file counts
-- [ ] Snapshot storage: write JSON to `.repostat/snapshots/`
-- [ ] Snapshot diffing: compare current run to most recent snapshot
-- [ ] Terminal dashboard: compact box-drawn output with all Phase 1 metrics
-- [ ] `--json` flag for machine-readable output
-- [ ] `--markdown` flag for report generation
-- [ ] Parallel file processing with `rayon`
-- [ ] Color support with `NO_COLOR` respect
+- [x] Project scaffold — completed 2026-03-19
+- [x] CLI argument parsing — completed 2026-03-19
+- [x] Config file loading — completed 2026-03-19
+- [x] File scanner — completed 2026-03-19
+- [x] Language detection — completed 2026-03-19
+- [x] Line counting engine — completed 2026-03-19
+- [x] Generated/minified detection — completed 2026-03-19
+- [x] Metric aggregation — completed 2026-03-19
+- [x] Snapshot storage — completed 2026-03-19
+- [x] Snapshot diffing — completed 2026-03-19
+- [x] Terminal dashboard — completed 2026-03-19
+- [x] --json flag — completed 2026-03-19
+- [x] --markdown flag — completed 2026-03-19
+- [x] Parallel processing (rayon) — completed 2026-03-19
+- [x] Color support (NO_COLOR) — completed 2026-03-19
 
 ### Phase 2–7
 - [ ] Not started
 
 ## Learnings
 
-> Things discovered during implementation that future sessions need to know.
-
-(none yet)
+- 2026-03-19: Rust 1.93.1 on this machine; edition 2024 compiles without issues.
+- 2026-03-19: Clippy treats pub(crate) fields as dead_code if not read in non-test code.
+- 2026-03-19: The `ignore` crate needs a git init in test dirs for .gitignore to work.
+- 2026-03-19: Added `globset` crate for config pattern matching.
+- 2026-03-19: Clippy upper_case_acronyms lint — use #[allow] on the Language enum.
+- 2026-03-19: Block comment detection: check if close marker appears after open on same line.
 
 ## Session Log
 
 | Date | Tasks Completed | Notes |
 |------|----------------|-------|
-| — | — | Project initialized with docs and .claude config |
+| 2026-03-19 | Tasks 1-5 | Scaffold, CLI, config, scanner, language detection |
+| 2026-03-19 | Tasks 6-15 | LOC, filters, aggregation, snapshots, dashboard, JSON, markdown, rayon, color |
