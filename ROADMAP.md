@@ -83,19 +83,19 @@ graph identifies the most-connected modules.
 
 **Goal**: Claude CLI integration for architecture, features, quality, and effort estimation.
 
-- [ ] Claude CLI detection (`which claude`)
-- [ ] Skill file system: load from `~/.repostat/skills/`, write defaults on first run
-- [ ] Claude CLI invocation: `claude -p` in target dir with skill content and JSON output
-- [ ] Lenient JSON response parsing with defaults for missing fields
-- [ ] Architecture summary skill
-- [ ] Feature inventory skill
-- [ ] Code quality review skill
-- [ ] Effort estimation skill
-- [ ] Stale documentation detection skill
-- [ ] Doc quality scoring skill
-- [ ] AI results section in dashboard
-- [ ] AI results stored in snapshots
-- [ ] Graceful degradation when Claude CLI unavailable
+- [x] Claude CLI detection (`which claude`)
+- [x] Skill file system: load from `~/.repostat/skills/`, write defaults on first run
+- [x] Claude CLI invocation: `claude -p` in target dir with skill content and JSON output
+- [x] Lenient JSON response parsing with defaults for missing fields
+- [x] Architecture summary skill
+- [x] Feature inventory skill
+- [x] Code quality review skill
+- [x] Effort estimation skill
+- [x] Stale documentation detection skill
+- [x] Doc quality scoring skill
+- [x] AI results section in dashboard
+- [x] AI results stored in snapshots
+- [x] Graceful degradation when Claude CLI unavailable
 
 **Exit Criteria**: AI analysis runs on 3+ repos and returns useful, parseable results.
 Graceful skip works when Claude CLI is missing. Results are stored in snapshots.
