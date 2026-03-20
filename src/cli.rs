@@ -48,6 +48,12 @@ pub(crate) enum Command {
     },
     /// Generate a man page.
     Manpage,
+    /// Initialize a .repostat.toml config file with defaults.
+    Init {
+        /// Overwrite existing config file.
+        #[arg(long)]
+        force: bool,
+    },
 }
 
 /// Parsed and validated CLI arguments.
@@ -62,6 +68,11 @@ pub(crate) enum ValidatedCommand {
     Completions(Shell),
     /// Generate man page.
     Manpage,
+    /// Initialize config file.
+    Init {
+        /// Whether to overwrite existing config.
+        force: bool,
+    },
 }
 
 /// Arguments for the analyze (default) subcommand.
@@ -94,6 +105,7 @@ pub(crate) fn parse_and_validate() -> anyhow::Result<ValidatedCommand> {
         Some(Command::List) => Ok(ValidatedCommand::List),
         Some(Command::Completions { shell }) => Ok(ValidatedCommand::Completions(shell)),
         Some(Command::Manpage) => Ok(ValidatedCommand::Manpage),
+        Some(Command::Init { force }) => Ok(ValidatedCommand::Init { force }),
         None => {
             let path = resolve_path(args.path)?;
             Ok(ValidatedCommand::Analyze(AnalyzeArgs {

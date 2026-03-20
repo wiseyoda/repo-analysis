@@ -35,6 +35,7 @@ fn main() {
                 process::exit(2);
             }
         }
+        cli::ValidatedCommand::Init { force } => run_init(force),
     }
 }
 
@@ -276,4 +277,43 @@ fn run_list() {
         eprintln!("error: failed to list repos: {e}");
         process::exit(2);
     }
+}
+
+/// Default config template with commented defaults.
+const DEFAULT_CONFIG: &str = r#"# repostat configuration
+# See https://github.com/wiseyoda/repo-analysis for documentation.
+
+# Exclude files/directories from analysis (glob patterns).
+# These are applied on top of .gitignore and built-in heuristics.
+# [exclude]
+# patterns = ["generated/**", "vendor/**"]
+
+# Force-include files that would otherwise be excluded.
+# [include]
+# patterns = ["vendor/important/**"]
+
+# Health score thresholds for exit codes.
+# Exit 0 = healthy, 10 = warning, 20 = critical.
+# [health]
+# warn_complexity = 25
+# crit_complexity = 50
+# warn_function_lines = 60
+# crit_function_lines = 100
+"#;
+
+/// Run the init subcommand.
+fn run_init(force: bool) {
+    let path = std::path::Path::new(".repostat.toml");
+
+    if path.exists() && !force {
+        eprintln!("error: .repostat.toml already exists. Use --force to overwrite.");
+        process::exit(1);
+    }
+
+    if let Err(e) = std::fs::write(path, DEFAULT_CONFIG) {
+        eprintln!("error: failed to write .repostat.toml: {e}");
+        process::exit(1);
+    }
+
+    eprintln!("Created .repostat.toml with default settings.");
 }

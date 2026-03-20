@@ -60,6 +60,46 @@ fn defaults_to_current_directory() {
 }
 
 #[test]
+fn init_creates_config_file() {
+    let dir = TempDir::new().unwrap();
+    repostat()
+        .arg("init")
+        .current_dir(dir.path())
+        .assert()
+        .success();
+    assert!(dir.path().join(".repostat.toml").exists());
+    let content = std::fs::read_to_string(dir.path().join(".repostat.toml")).unwrap();
+    assert!(content.contains("[health]"));
+    assert!(content.contains("warn_complexity"));
+}
+
+#[test]
+fn init_errors_on_existing_config() {
+    let dir = TempDir::new().unwrap();
+    std::fs::write(dir.path().join(".repostat.toml"), "existing").unwrap();
+    repostat()
+        .arg("init")
+        .current_dir(dir.path())
+        .assert()
+        .failure()
+        .code(1)
+        .stderr(predicate::str::contains("already exists"));
+}
+
+#[test]
+fn init_force_overwrites() {
+    let dir = TempDir::new().unwrap();
+    std::fs::write(dir.path().join(".repostat.toml"), "old").unwrap();
+    repostat()
+        .args(["init", "--force"])
+        .current_dir(dir.path())
+        .assert()
+        .success();
+    let content = std::fs::read_to_string(dir.path().join(".repostat.toml")).unwrap();
+    assert!(content.contains("[health]"));
+}
+
+#[test]
 fn warns_on_empty_directory() {
     let dir = TempDir::new().unwrap();
     repostat()

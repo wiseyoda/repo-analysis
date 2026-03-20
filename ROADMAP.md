@@ -158,7 +158,7 @@ See `docs/designs/phase-9-health-check.md` for full design.
 - [x] Parallel AI skills via `rayon::scope` (6 concurrent invocations)
 - [x] Health score exit codes (0=ok, 1=error, 10=warning, 20=critical)
 - [x] Health thresholds in config (`[health]` section in .repostat.toml)
-- [ ] `repostat init` command with --force flag
+- [x] `repostat init` command with --force flag
 - [ ] `repostat diff HEAD~N` scoped analysis (commits only, changed-files filter)
 - [ ] HTML dashboard output with pure SVG charts (`--html` flag)
 - [ ] Graceful degradation: no git → skip risk, no AI → skip AI section
