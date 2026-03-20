@@ -11,13 +11,19 @@ mod scanner;
 mod snapshot;
 
 fn main() {
-    match cli::parse_and_validate() {
-        Ok(_path) => {
-            // Analysis pipeline will go here
-        }
+    let path = match cli::parse_and_validate() {
+        Ok(p) => p,
         Err(e) => {
             eprintln!("error: {e}");
             process::exit(1);
         }
-    }
+    };
+
+    let _config = match config::Config::load(&path) {
+        Ok(c) => c,
+        Err(e) => {
+            eprintln!("error: {e}");
+            process::exit(1);
+        }
+    };
 }

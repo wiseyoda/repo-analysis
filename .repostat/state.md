@@ -5,7 +5,7 @@
 ## Current Task
 
 - **Phase:** 1
-- **Task:** `.repostat.toml` config file loading and validation
+- **Task:** File scanner: recursive walk with gitignore + heuristic + config exclusions
 - **Status:** idle
 - **Blocker:** none
 - **Started:** —
@@ -15,7 +15,7 @@
 ### Phase 1: Foundation & Core Metrics
 - [x] Project scaffold: `Cargo.toml`, module structure, CI config — completed 2026-03-19
 - [x] CLI argument parsing with `clap` (path argument, `--help`, `--version`) — completed 2026-03-19
-- [ ] `.repostat.toml` config file loading and validation
+- [x] `.repostat.toml` config file loading and validation — completed 2026-03-19
 - [ ] File scanner: recursive walk with gitignore + heuristic + config exclusions
 - [ ] Language detection from file extensions (50+ languages)
 - [ ] Line counting engine: code, comments, blanks — per file, per language
@@ -37,6 +37,7 @@
 > Things discovered during implementation that future sessions need to know.
 
 - 2026-03-19: Rust 1.93.1 on this machine; edition 2024 compiles without issues.
+- 2026-03-19: Clippy treats pub(crate) fields as dead_code if not read in non-test code. Use #[allow(dead_code)] with TODO comment for fields that will be consumed by the next task.
 
 ## Session Log
 
@@ -45,3 +46,4 @@
 | — | — | Project initialized with docs and .claude config |
 | 2026-03-19 | Project scaffold | Cargo.toml, 9 source files, CI config, 3 integration tests. Quality gate passes. |
 | 2026-03-19 | CLI argument parsing | Path validation, error handling, spec + 4 new integration tests. |
+| 2026-03-19 | Config loading | .repostat.toml parsing with exclude/include patterns, 7 unit tests. |
