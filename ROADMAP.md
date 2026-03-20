@@ -51,7 +51,7 @@ Hotspots correctly identify the most complex code. All 10 bundled grammars work.
 
 **Goal**: External dependency counts and internal coupling metrics.
 
-- [ ] Dependency manifest parser (package.json, Cargo.toml, requirements.txt, go.mod, etc.)
+- [x] Dependency manifest parser (package.json, Cargo.toml, requirements.txt, go.mod, etc.)
 - [ ] Direct dependency counting per manifest
 - [ ] Lock file parsing for transitive dependency counts
 - [ ] Import/require/use statement parsing for internal dependency graph
