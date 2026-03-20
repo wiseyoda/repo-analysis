@@ -66,6 +66,23 @@ pub(crate) struct Snapshot {
     /// Number of files skipped due to read errors.
     #[serde(default)]
     pub(crate) skipped_files: usize,
+    /// Per-file risk data (raw inputs: churn + complexity).
+    #[serde(default)]
+    pub(crate) risk_hotspots: Vec<SnapshotRiskEntry>,
+}
+
+/// Per-file risk data stored in a snapshot.
+///
+/// Stores raw inputs (churn_count, max_complexity) rather than computed
+/// scores so the formula can change without invalidating history.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub(crate) struct SnapshotRiskEntry {
+    /// File path (relative to repo root).
+    pub(crate) file: String,
+    /// Number of commits in the last 6 months.
+    pub(crate) churn_count: usize,
+    /// Maximum cyclomatic complexity of any function.
+    pub(crate) max_complexity: usize,
 }
 
 /// Dependency data stored in a snapshot.
@@ -242,12 +259,13 @@ impl Snapshot {
             documentation,
             ai_analysis: ai_result.cloned(),
             skipped_files,
+            risk_hotspots: vec![],
         }
     }
 
     /// Build a snapshot from an `AnalysisResult`.
     pub(crate) fn from_analysis(result: &AnalysisResult) -> Self {
-        Self::from_aggregate(
+        let mut snap = Self::from_aggregate(
             &result.agg,
             result.git_sha.clone(),
             &result.hotspots,
@@ -255,7 +273,17 @@ impl Snapshot {
             result.doc_metrics.as_ref(),
             result.ai_result.as_ref(),
             result.skipped_files,
-        )
+        );
+        snap.risk_hotspots = result
+            .risk_entries
+            .iter()
+            .map(|r| SnapshotRiskEntry {
+                file: r.file.clone(),
+                churn_count: r.churn_count,
+                max_complexity: r.max_complexity,
+            })
+            .collect();
+        snap
     }
 }
 
@@ -415,6 +443,7 @@ mod tests {
             documentation: None,
             ai_analysis: None,
             skipped_files: 0,
+            risk_hotspots: vec![],
         };
 
         let json = serde_json::to_string_pretty(&snap).unwrap();

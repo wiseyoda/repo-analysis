@@ -153,7 +153,7 @@ See `docs/designs/phase-9-health-check.md` for full design.
 - [x] Report module unit tests (dashboard.rs, markdown.rs, trend.rs)
 - [x] Per-file churn collection via `git log --name-only`
 - [x] Churn + complexity risk score computation and display
-- [ ] Risk scores in snapshots (raw inputs: churn_count, max_complexity)
+- [x] Risk scores in snapshots (raw inputs: churn_count, max_complexity)
 - [ ] Risk scores in dashboard, JSON, markdown output
 - [ ] Parallel AI skills via `rayon::scope` (6 concurrent invocations)
 - [ ] Health score exit codes (0=ok, 1=error, 10=warning, 20=critical)

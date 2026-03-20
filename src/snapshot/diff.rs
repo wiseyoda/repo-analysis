@@ -67,6 +67,7 @@ mod tests {
             documentation: None,
             ai_analysis: None,
             skipped_files: 0,
+            risk_hotspots: vec![],
         }
     }
 
