@@ -7,6 +7,24 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-03-19
+
+### Added
+- CLI with path argument, `--help`, `--version`, `--json`, `--markdown` flags
+- `.repostat.toml` config file with custom include/exclude glob patterns
+- Recursive file scanner with three-layer exclusion (gitignore, heuristics, config)
+- Language detection for 52+ programming languages by file extension
+- Line counting engine with language-aware comment detection (single + block)
+- Generated/minified file detection and exclusion from metrics
+- Per-language metric aggregation with file counts and line breakdowns
+- JSON snapshot storage in `.repostat/snapshots/` with timestamps and git SHA
+- Snapshot diffing showing deltas from the previous analysis run
+- Terminal dashboard with box-drawn output, per-language table, and diff display
+- Markdown report generation via `--markdown` flag
+- Color output with `NO_COLOR` environment variable support
+- Parallel file processing via rayon for multi-core performance
+- GitHub Actions CI pipeline (fmt, clippy, test, build)
+
 ## [0.1.0] - 2026-03-19
 
 ### Added
