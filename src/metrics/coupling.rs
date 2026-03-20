@@ -3,8 +3,8 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 
-use crate::scanner::language::Language;
 use crate::scanner::ScannedFile;
+use crate::scanner::language::Language;
 
 /// Internal dependency graph: which files import which.
 #[derive(Debug, Clone, Default)]

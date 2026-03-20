@@ -133,6 +133,12 @@ fn run_analyze(args: &cli::AnalyzeArgs) {
     } else {
         let color = report::color::is_color_enabled();
         let mut stdout = std::io::stdout().lock();
+
+        // Load snapshot history for sparklines
+        let all_snapshots = snapshot::store::load_all(&args.path).unwrap_or_default();
+        let history_lines: Vec<usize> = all_snapshots.iter().map(|s| s.total_lines.code).collect();
+        let history_files: Vec<usize> = all_snapshots.iter().map(|s| s.total_files).collect();
+
         let dashboard_data = report::dashboard::DashboardData {
             agg: &agg,
             diff: diff.as_ref(),
@@ -140,6 +146,8 @@ fn run_analyze(args: &cli::AnalyzeArgs) {
             dep_summary: &dep_summary,
             doc_metrics: Some(&doc_metrics),
             ai_result: ai_result.as_ref(),
+            history_lines,
+            history_files,
         };
         if let Err(e) = report::dashboard::render(&dashboard_data, &mut stdout, color) {
             eprintln!("error: failed to render dashboard: {e}");
