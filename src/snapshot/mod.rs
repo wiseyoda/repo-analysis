@@ -21,6 +21,24 @@ pub(crate) struct Snapshot {
     pub(crate) total_lines: SnapshotLineMetrics,
     /// Per-language breakdown.
     pub(crate) by_language: BTreeMap<String, SnapshotLanguageEntry>,
+    /// Complexity hotspots (top N most complex functions).
+    #[serde(default)]
+    pub(crate) hotspots: Vec<SnapshotHotspot>,
+}
+
+/// A complexity hotspot stored in a snapshot.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub(crate) struct SnapshotHotspot {
+    /// File path (relative to repo root).
+    pub(crate) file: String,
+    /// Function name.
+    pub(crate) function: String,
+    /// Cyclomatic complexity.
+    pub(crate) cyclomatic: usize,
+    /// Cognitive complexity.
+    pub(crate) cognitive: usize,
+    /// Number of lines.
+    pub(crate) lines: usize,
 }
 
 /// Line metrics as stored in a snapshot.
@@ -46,10 +64,11 @@ pub(crate) struct SnapshotLanguageEntry {
 }
 
 impl Snapshot {
-    /// Build a snapshot from aggregate metrics.
+    /// Build a snapshot from aggregate metrics and hotspot data.
     pub(crate) fn from_aggregate(
         agg: &crate::metrics::aggregate::AggregateMetrics,
         git_sha: Option<String>,
+        hotspots: &[(String, crate::metrics::complexity::FunctionInfo)],
     ) -> Self {
         let mut by_language = BTreeMap::new();
         for (lang, metrics) in &agg.by_language {
@@ -71,12 +90,24 @@ impl Snapshot {
             );
         }
 
+        let snapshot_hotspots = hotspots
+            .iter()
+            .map(|(path, func)| SnapshotHotspot {
+                file: path.clone(),
+                function: func.name.clone(),
+                cyclomatic: func.cyclomatic,
+                cognitive: func.cognitive,
+                lines: func.line_count,
+            })
+            .collect();
+
         Self {
             timestamp: Utc::now(),
             git_sha,
             total_files: agg.total_files,
             total_lines: SnapshotLineMetrics::from_line_metrics(&agg.total_lines),
             by_language,
+            hotspots: snapshot_hotspots,
         }
     }
 }
@@ -141,7 +172,7 @@ mod tests {
             unknown_language: LanguageMetrics::default(),
         };
 
-        let snap = Snapshot::from_aggregate(&agg, Some("abc123".to_string()));
+        let snap = Snapshot::from_aggregate(&agg, Some("abc123".to_string()), &[]);
         assert_eq!(snap.total_files, 3);
         assert_eq!(snap.total_lines.code, 80);
         assert_eq!(snap.git_sha, Some("abc123".to_string()));
@@ -176,6 +207,7 @@ mod tests {
                 comment: 1,
             },
             by_language,
+            hotspots: vec![],
         };
 
         let json = serde_json::to_string_pretty(&snap).unwrap();

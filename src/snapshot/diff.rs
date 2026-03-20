@@ -62,6 +62,7 @@ mod tests {
                 comment: 0,
             },
             by_language: BTreeMap::new(),
+            hotspots: vec![],
         }
     }
 

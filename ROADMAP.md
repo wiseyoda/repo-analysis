@@ -33,14 +33,14 @@ for 50k lines), and the dashboard is readable. Snapshots persist and diffs displ
 
 **Goal**: Tree-sitter powered cyclomatic and cognitive complexity. Hotspot identification.
 
-- [ ] Tree-sitter integration and grammar compilation (top 10 languages)
-- [ ] Cyclomatic complexity calculation per function and per file
-- [ ] Cognitive complexity calculation (nested-logic weighting)
-- [ ] Function extraction: name, line count, complexity per function
-- [ ] File size and function size threshold flagging
-- [ ] Complexity hotspots section in the dashboard (top N worst)
-- [ ] Regex fallback for unsupported languages
-- [ ] Complexity data in snapshots for trend tracking
+- [x] Tree-sitter integration and grammar compilation (top 10 languages)
+- [x] Cyclomatic complexity calculation per function and per file
+- [x] Cognitive complexity calculation (nested-logic weighting)
+- [x] Function extraction: name, line count, complexity per function
+- [x] File size and function size threshold flagging
+- [x] Complexity hotspots section in the dashboard (top N worst)
+- [x] Regex fallback for unsupported languages
+- [x] Complexity data in snapshots for trend tracking
 
 **Exit Criteria**: Complexity scores match manual calculation on test fixtures.
 Hotspots correctly identify the most complex code. All 10 bundled grammars work.

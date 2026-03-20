@@ -7,6 +7,18 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-03-20
+
+### Added
+- Tree-sitter integration with compiled grammars for 10 languages (Rust, Python, JS, TS, Go, Java, C, C++, Swift, Ruby)
+- Cyclomatic complexity calculation per function and per file
+- Cognitive complexity calculation with nesting depth penalties (SonarQube-style)
+- Function extraction: name, line count, cyclomatic and cognitive scores
+- File and function size threshold flagging (configurable, defaults: 50/500 lines)
+- Complexity hotspots section in the terminal dashboard (top 10 most complex functions)
+- Regex-based complexity fallback for languages without tree-sitter grammars
+- Complexity hotspot data stored in JSON snapshots for trend tracking
+
 ## [0.2.0] - 2026-03-19
 
 ### Added

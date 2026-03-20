@@ -1,16 +1,21 @@
-//! Terminal dashboard: compact box-drawn output with all Phase 1 metrics.
+//! Terminal dashboard: compact box-drawn output with all metrics.
 
 use std::io::{self, Write};
 
 use crate::metrics::aggregate::AggregateMetrics;
+use crate::metrics::complexity::FunctionInfo;
 use crate::snapshot::diff::SnapshotDiff;
 
 use super::color::ColorWriter;
+
+/// Hotspot entry: file path + function info.
+pub(crate) type Hotspot = (String, FunctionInfo);
 
 /// Render the terminal dashboard to stdout.
 pub(crate) fn render(
     agg: &AggregateMetrics,
     diff: Option<&SnapshotDiff>,
+    hotspots: &[Hotspot],
     writer: &mut dyn Write,
     color: bool,
 ) -> io::Result<()> {
@@ -18,6 +23,31 @@ pub(crate) fn render(
     render_header(&mut cw)?;
     render_summary(agg, diff, &mut cw)?;
     render_language_breakdown(agg, &mut cw)?;
+    if !hotspots.is_empty() {
+        render_hotspots(hotspots, &mut cw)?;
+    }
+    Ok(())
+}
+
+/// Render complexity hotspots section.
+fn render_hotspots(hotspots: &[Hotspot], cw: &mut ColorWriter) -> io::Result<()> {
+    cw.dim("├────────────────────────────────────────┤")?;
+    cw.newline()?;
+    cw.plain("│ ")?;
+    cw.bold("Complexity Hotspots")?;
+    cw.newline()?;
+    cw.dim("│ ─────────────────────────────────────  │")?;
+    cw.newline()?;
+
+    for (path, func) in hotspots.iter().take(10) {
+        cw.plain(&format!(
+            "│  CC={:<3} Cog={:<3} {:>4}L  {}::{}\n",
+            func.cyclomatic, func.cognitive, func.line_count, path, func.name,
+        ))?;
+    }
+
+    cw.dim("└────────────────────────────────────────┘")?;
+    cw.newline()?;
     Ok(())
 }
 
@@ -183,7 +213,7 @@ mod tests {
     fn renders_without_diff() {
         let agg = make_agg();
         let mut buf = Vec::new();
-        render(&agg, None, &mut buf, false).unwrap();
+        render(&agg, None, &[], &mut buf, false).unwrap();
         let output = String::from_utf8(buf).unwrap();
 
         assert!(output.contains("repostat"));
@@ -205,7 +235,7 @@ mod tests {
             },
         };
         let mut buf = Vec::new();
-        render(&agg, Some(&diff), &mut buf, false).unwrap();
+        render(&agg, Some(&diff), &[], &mut buf, false).unwrap();
         let output = String::from_utf8(buf).unwrap();
 
         assert!(output.contains("(+2)"));
@@ -216,7 +246,7 @@ mod tests {
     fn languages_sorted_by_code_lines_descending() {
         let agg = make_agg();
         let mut buf = Vec::new();
-        render(&agg, None, &mut buf, false).unwrap();
+        render(&agg, None, &[], &mut buf, false).unwrap();
         let output = String::from_utf8(buf).unwrap();
 
         let rust_pos = output.find("Rust").unwrap();
@@ -228,7 +258,7 @@ mod tests {
     fn color_mode_adds_ansi_codes() {
         let agg = make_agg();
         let mut buf = Vec::new();
-        render(&agg, None, &mut buf, true).unwrap();
+        render(&agg, None, &[], &mut buf, true).unwrap();
         let output = String::from_utf8(buf).unwrap();
         assert!(output.contains("\x1b["), "should contain ANSI codes");
     }
@@ -237,7 +267,7 @@ mod tests {
     fn no_color_mode_has_no_ansi() {
         let agg = make_agg();
         let mut buf = Vec::new();
-        render(&agg, None, &mut buf, false).unwrap();
+        render(&agg, None, &[], &mut buf, false).unwrap();
         let output = String::from_utf8(buf).unwrap();
         assert!(!output.contains("\x1b["), "should not contain ANSI codes");
     }
