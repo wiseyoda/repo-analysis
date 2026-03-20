@@ -133,6 +133,14 @@ fn run_analyze(args: &cli::AnalyzeArgs) {
     let ai_result = ai::run_ai_analysis(&args.path);
     let ai_dur = t.elapsed();
 
+    // Compute risk scores from churn + complexity
+    let file_churn = metrics::git_history::collect_file_churn(&args.path);
+    let complexity_map = metrics::risk::file_complexity_map(&hotspots);
+    let risk_entries = match &file_churn {
+        Some(churn) => metrics::risk::compute_risk_scores(churn, &complexity_map),
+        None => vec![],
+    };
+
     let analysis = snapshot::AnalysisResult {
         agg,
         git_sha: snapshot::current_git_sha(),
@@ -141,6 +149,7 @@ fn run_analyze(args: &cli::AnalyzeArgs) {
         doc_metrics: Some(doc_metrics),
         ai_result,
         skipped_files,
+        risk_entries,
     };
 
     let t = Instant::now();
@@ -191,6 +200,7 @@ fn run_analyze(args: &cli::AnalyzeArgs) {
             history_lines,
             history_files,
             skipped_files: analysis.skipped_files,
+            risk_entries: &analysis.risk_entries,
         };
         if let Err(e) = report::dashboard::render(&dashboard_data, &mut stdout, color) {
             eprintln!("error: failed to render dashboard: {e}");

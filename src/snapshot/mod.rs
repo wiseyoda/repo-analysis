@@ -13,6 +13,7 @@ use crate::metrics::aggregate::AggregateMetrics;
 use crate::metrics::complexity::FunctionInfo;
 use crate::metrics::dependencies::DependencySummary;
 use crate::metrics::documentation::DocumentationMetrics;
+use crate::metrics::risk::RiskEntry;
 
 /// Collected outputs from all analysis passes.
 ///
@@ -33,6 +34,8 @@ pub(crate) struct AnalysisResult {
     pub(crate) ai_result: Option<crate::ai::schema::AiAnalysisResult>,
     /// Number of files skipped due to read errors.
     pub(crate) skipped_files: usize,
+    /// Per-file risk entries (churn * complexity).
+    pub(crate) risk_entries: Vec<RiskEntry>,
 }
 
 /// A point-in-time snapshot of repository metrics.
@@ -370,6 +373,7 @@ mod tests {
             doc_metrics: None,
             ai_result: None,
             skipped_files: 1,
+            risk_entries: vec![],
         };
 
         let snap = Snapshot::from_analysis(&result);
