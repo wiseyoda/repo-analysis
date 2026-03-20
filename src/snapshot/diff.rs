@@ -65,6 +65,7 @@ mod tests {
             hotspots: vec![],
             dependencies: None,
             documentation: None,
+            ai_analysis: None,
         }
     }
 

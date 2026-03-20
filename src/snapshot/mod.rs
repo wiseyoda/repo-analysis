@@ -30,6 +30,9 @@ pub(crate) struct Snapshot {
     /// Documentation metrics.
     #[serde(default)]
     pub(crate) documentation: Option<SnapshotDocumentation>,
+    /// AI analysis results.
+    #[serde(default)]
+    pub(crate) ai_analysis: Option<crate::ai::schema::AiAnalysisResult>,
 }
 
 /// Dependency data stored in a snapshot.
@@ -113,13 +116,14 @@ pub(crate) struct SnapshotLanguageEntry {
 }
 
 impl Snapshot {
-    /// Build a snapshot from aggregate metrics, hotspots, dependency, and doc data.
+    /// Build a snapshot from aggregate metrics, hotspots, dependency, doc, and AI data.
     pub(crate) fn from_aggregate(
         agg: &crate::metrics::aggregate::AggregateMetrics,
         git_sha: Option<String>,
         hotspots: &[(String, crate::metrics::complexity::FunctionInfo)],
         dep_summary: &crate::metrics::dependencies::DependencySummary,
         doc_metrics: Option<&crate::metrics::documentation::DocumentationMetrics>,
+        ai_result: Option<&crate::ai::schema::AiAnalysisResult>,
     ) -> Self {
         let mut by_language = BTreeMap::new();
         for (lang, metrics) in &agg.by_language {
@@ -201,6 +205,7 @@ impl Snapshot {
             hotspots: snapshot_hotspots,
             dependencies,
             documentation,
+            ai_analysis: ai_result.cloned(),
         }
     }
 }
@@ -266,8 +271,14 @@ mod tests {
         };
 
         let dep_default = crate::metrics::dependencies::DependencySummary::default();
-        let snap =
-            Snapshot::from_aggregate(&agg, Some("abc123".to_string()), &[], &dep_default, None);
+        let snap = Snapshot::from_aggregate(
+            &agg,
+            Some("abc123".to_string()),
+            &[],
+            &dep_default,
+            None,
+            None,
+        );
         assert_eq!(snap.total_files, 3);
         assert_eq!(snap.total_lines.code, 80);
         assert_eq!(snap.git_sha, Some("abc123".to_string()));
@@ -305,6 +316,7 @@ mod tests {
             hotspots: vec![],
             dependencies: None,
             documentation: None,
+            ai_analysis: None,
         };
 
         let json = serde_json::to_string_pretty(&snap).unwrap();

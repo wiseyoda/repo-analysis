@@ -35,7 +35,7 @@ pub(crate) fn invoke(
     prompt: &str,
 ) -> Result<String, InvokeError> {
     let child = Command::new(cli_path)
-        .args(["-p", prompt, "--output-format", "json"])
+        .args(["-p", prompt, "--output-format", "json", "--model", "haiku"])
         .current_dir(target_dir)
         .stdout(std::process::Stdio::piped())
         .stderr(std::process::Stdio::piped())

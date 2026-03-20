@@ -133,6 +133,7 @@ mod tests {
             &[],
             &crate::metrics::dependencies::DependencySummary::default(),
             None,
+            None,
         )
     }
 

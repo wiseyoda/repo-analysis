@@ -4,7 +4,6 @@ use std::process;
 
 use rayon::prelude::*;
 
-#[allow(dead_code)] // wired into pipeline when dashboard integrates AI
 mod ai;
 mod cli;
 mod config;
@@ -86,6 +85,8 @@ fn main() {
     let doc_metrics =
         metrics::documentation::analyze_documentation(&args.path, agg.total_lines.code_lines);
 
+    let ai_result = ai::run_ai_analysis(&args.path);
+
     let previous = snapshot::store::load_latest(&args.path).ok().flatten();
 
     let snap = snapshot::Snapshot::from_aggregate(
@@ -94,6 +95,7 @@ fn main() {
         &hotspots,
         &dep_summary,
         Some(&doc_metrics),
+        ai_result.as_ref(),
     );
     if let Err(e) = snapshot::store::write_snapshot(&args.path, &snap) {
         eprintln!("warning: failed to write snapshot: {e}");
@@ -118,15 +120,15 @@ fn main() {
     } else {
         let color = report::color::is_color_enabled();
         let mut stdout = std::io::stdout().lock();
-        if let Err(e) = report::dashboard::render(
-            &agg,
-            diff.as_ref(),
-            &hotspots,
-            &dep_summary,
-            Some(&doc_metrics),
-            &mut stdout,
-            color,
-        ) {
+        let dashboard_data = report::dashboard::DashboardData {
+            agg: &agg,
+            diff: diff.as_ref(),
+            hotspots: &hotspots,
+            dep_summary: &dep_summary,
+            doc_metrics: Some(&doc_metrics),
+            ai_result: ai_result.as_ref(),
+        };
+        if let Err(e) = report::dashboard::render(&dashboard_data, &mut stdout, color) {
             eprintln!("error: failed to render dashboard: {e}");
             process::exit(2);
         }
