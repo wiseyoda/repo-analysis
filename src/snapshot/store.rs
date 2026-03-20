@@ -127,7 +127,7 @@ mod tests {
             by_language: BTreeMap::new(),
             unknown_language: LanguageMetrics::default(),
         };
-        Snapshot::from_aggregate(&agg, None)
+        Snapshot::from_aggregate(&agg, None, &[])
     }
 
     #[test]

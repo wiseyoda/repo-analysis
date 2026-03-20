@@ -40,7 +40,7 @@ for 50k lines), and the dashboard is readable. Snapshots persist and diffs displ
 - [x] File size and function size threshold flagging
 - [x] Complexity hotspots section in the dashboard (top N worst)
 - [x] Regex fallback for unsupported languages
-- [ ] Complexity data in snapshots for trend tracking
+- [x] Complexity data in snapshots for trend tracking
 
 **Exit Criteria**: Complexity scores match manual calculation on test fixtures.
 Hotspots correctly identify the most complex code. All 10 bundled grammars work.
