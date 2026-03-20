@@ -68,9 +68,11 @@ fn main() {
             }
         }
     } else if args.markdown {
-        // Markdown output will be implemented in the next task
-        eprintln!("error: --markdown not yet implemented");
-        process::exit(1);
+        let mut stdout = std::io::stdout().lock();
+        if let Err(e) = report::markdown::render(&agg, diff.as_ref(), &mut stdout) {
+            eprintln!("error: failed to render markdown: {e}");
+            process::exit(2);
+        }
     } else {
         let mut stdout = std::io::stdout().lock();
         if let Err(e) = report::dashboard::render(&agg, diff.as_ref(), &mut stdout) {

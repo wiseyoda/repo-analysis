@@ -20,7 +20,7 @@ statistics with a terminal dashboard. Snapshots are stored and diffed.
 - [x] Snapshot diffing: compare current run to most recent snapshot
 - [x] Terminal dashboard: compact box-drawn output with all Phase 1 metrics
 - [x] `--json` flag for machine-readable output
-- [ ] `--markdown` flag for report generation
+- [x] `--markdown` flag for report generation
 - [ ] Parallel file processing with `rayon`
 - [ ] Color support with `NO_COLOR` respect
 
