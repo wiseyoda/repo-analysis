@@ -7,4 +7,5 @@ pub(crate) mod complexity;
 pub(crate) mod coupling;
 #[allow(dead_code)] // wired into pipeline when dashboard integrates deps
 pub(crate) mod dependencies;
+pub(crate) mod documentation;
 pub(crate) mod loc;

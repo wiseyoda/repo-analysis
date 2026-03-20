@@ -81,6 +81,9 @@ fn main() {
 
     let dep_summary = metrics::dependencies::summarize_dependencies(&args.path);
 
+    let doc_metrics =
+        metrics::documentation::analyze_documentation(&args.path, agg.total_lines.code_lines);
+
     let previous = snapshot::store::load_latest(&args.path).ok().flatten();
 
     let snap = snapshot::Snapshot::from_aggregate(
@@ -88,6 +91,7 @@ fn main() {
         snapshot::current_git_sha(),
         &hotspots,
         &dep_summary,
+        Some(&doc_metrics),
     );
     if let Err(e) = snapshot::store::write_snapshot(&args.path, &snap) {
         eprintln!("warning: failed to write snapshot: {e}");
@@ -117,6 +121,7 @@ fn main() {
             diff.as_ref(),
             &hotspots,
             &dep_summary,
+            Some(&doc_metrics),
             &mut stdout,
             color,
         ) {

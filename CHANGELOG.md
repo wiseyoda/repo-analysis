@@ -7,6 +7,17 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-03-20
+
+### Added
+- Markdown file inventory: count, total lines, and total characters across all .md files
+- Doc-to-code ratio calculation (documentation lines vs code lines)
+- README completeness checker scoring 5 sections: install, usage, API, contributing, license
+- Per-directory documentation coverage (source dirs with accompanying docs)
+- Documentation section in terminal dashboard showing all doc metrics
+- Documentation metrics stored in JSON snapshots for trend tracking
+- Feature spec: docs/specs/documentation-analysis.md
+
 ## [0.4.0] - 2026-03-20
 
 ### Added

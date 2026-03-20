@@ -5,6 +5,7 @@ use std::io::{self, Write};
 use crate::metrics::aggregate::AggregateMetrics;
 use crate::metrics::complexity::FunctionInfo;
 use crate::metrics::dependencies::DependencySummary;
+use crate::metrics::documentation::DocumentationMetrics;
 use crate::snapshot::diff::SnapshotDiff;
 
 use super::color::ColorWriter;
@@ -18,6 +19,7 @@ pub(crate) fn render(
     diff: Option<&SnapshotDiff>,
     hotspots: &[Hotspot],
     dep_summary: &DependencySummary,
+    doc_metrics: Option<&DocumentationMetrics>,
     writer: &mut dyn Write,
     color: bool,
 ) -> io::Result<()> {
@@ -30,6 +32,9 @@ pub(crate) fn render(
     }
     if !dep_summary.manifests.is_empty() {
         render_dependencies(dep_summary, &mut cw)?;
+    }
+    if let Some(docs) = doc_metrics {
+        render_documentation(docs, &mut cw)?;
     }
     Ok(())
 }
@@ -61,6 +66,62 @@ fn render_dependencies(summary: &DependencySummary, cw: &mut ColorWriter) -> io:
     if let Some(transitive) = summary.total_transitive {
         cw.plain(&format!("│  Total transitive: {transitive}\n"))?;
     }
+
+    cw.dim("└────────────────────────────────────────┘")?;
+    cw.newline()?;
+    Ok(())
+}
+
+/// Render documentation metrics section.
+fn render_documentation(docs: &DocumentationMetrics, cw: &mut ColorWriter) -> io::Result<()> {
+    cw.dim("├────────────────────────────────────────┤")?;
+    cw.newline()?;
+    cw.plain("│ ")?;
+    cw.bold("Documentation")?;
+    cw.newline()?;
+    cw.dim("│ ─────────────────────────────────────  │")?;
+    cw.newline()?;
+
+    cw.plain(&format!(
+        "│  Markdown files: {}\n",
+        docs.inventory.file_count,
+    ))?;
+    cw.plain(&format!(
+        "│  Doc lines:      {}\n",
+        docs.inventory.total_lines,
+    ))?;
+
+    let ratio_pct = docs.doc_to_code.ratio * 100.0;
+    cw.plain(&format!(
+        "│  Doc-to-code:    {:.2} ({:.0}%)\n",
+        docs.doc_to_code.ratio, ratio_pct,
+    ))?;
+
+    let present = docs
+        .readme_score
+        .sections
+        .iter()
+        .filter(|s| s.present)
+        .count();
+    let total = docs.readme_score.sections.len();
+    let score_pct = docs.readme_score.score * 100.0;
+    cw.plain(&format!(
+        "│  README score:   {}/{} ({:.0}%)\n",
+        present, total, score_pct,
+    ))?;
+
+    let covered = docs
+        .dir_coverage
+        .entries
+        .iter()
+        .filter(|e| e.has_docs)
+        .count();
+    let total_dirs = docs.dir_coverage.entries.len();
+    let cov_pct = docs.dir_coverage.coverage * 100.0;
+    cw.plain(&format!(
+        "│  Dir coverage:   {}/{} ({:.0}%)\n",
+        covered, total_dirs, cov_pct,
+    ))?;
 
     cw.dim("└────────────────────────────────────────┘")?;
     cw.newline()?;
@@ -256,6 +317,7 @@ mod tests {
             None,
             &[],
             &DependencySummary::default(),
+            None,
             &mut buf,
             false,
         )
@@ -286,6 +348,7 @@ mod tests {
             Some(&diff),
             &[],
             &DependencySummary::default(),
+            None,
             &mut buf,
             false,
         )
@@ -305,6 +368,7 @@ mod tests {
             None,
             &[],
             &DependencySummary::default(),
+            None,
             &mut buf,
             false,
         )
@@ -325,6 +389,7 @@ mod tests {
             None,
             &[],
             &DependencySummary::default(),
+            None,
             &mut buf,
             true,
         )
@@ -342,11 +407,89 @@ mod tests {
             None,
             &[],
             &DependencySummary::default(),
+            None,
             &mut buf,
             false,
         )
         .unwrap();
         let output = String::from_utf8(buf).unwrap();
         assert!(!output.contains("\x1b["), "should not contain ANSI codes");
+    }
+
+    #[test]
+    fn renders_documentation_section() {
+        use crate::metrics::documentation::*;
+
+        let agg = make_agg();
+        let docs = DocumentationMetrics {
+            inventory: DocInventory {
+                file_count: 3,
+                total_lines: 150,
+                total_chars: 5000,
+            },
+            doc_to_code: DocToCodeRatio {
+                doc_lines: 150,
+                code_lines: 1000,
+                ratio: 0.15,
+            },
+            readme_score: ReadmeScore {
+                readme_path: None,
+                sections: vec![
+                    ReadmeSection {
+                        name: "install",
+                        present: true,
+                    },
+                    ReadmeSection {
+                        name: "usage",
+                        present: true,
+                    },
+                    ReadmeSection {
+                        name: "api",
+                        present: false,
+                    },
+                    ReadmeSection {
+                        name: "contributing",
+                        present: true,
+                    },
+                    ReadmeSection {
+                        name: "license",
+                        present: true,
+                    },
+                ],
+                score: 0.8,
+            },
+            dir_coverage: DirCoverage {
+                entries: vec![
+                    DirCoverageEntry {
+                        dir: "src".into(),
+                        has_docs: true,
+                    },
+                    DirCoverageEntry {
+                        dir: "lib".into(),
+                        has_docs: false,
+                    },
+                ],
+                coverage: 0.5,
+            },
+        };
+        let mut buf = Vec::new();
+        render(
+            &agg,
+            None,
+            &[],
+            &DependencySummary::default(),
+            Some(&docs),
+            &mut buf,
+            false,
+        )
+        .unwrap();
+        let output = String::from_utf8(buf).unwrap();
+
+        assert!(output.contains("Documentation"));
+        assert!(output.contains("Markdown files: 3"));
+        assert!(output.contains("Doc lines:      150"));
+        assert!(output.contains("Doc-to-code:    0.15"));
+        assert!(output.contains("README score:   4/5"));
+        assert!(output.contains("Dir coverage:   1/2"));
     }
 }
