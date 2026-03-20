@@ -161,7 +161,7 @@ See `docs/designs/phase-9-health-check.md` for full design.
 - [x] `repostat init` command with --force flag
 - [x] `repostat diff HEAD~N` scoped analysis (commits only, changed-files filter)
 - [x] HTML dashboard output with pure SVG charts (`--html` flag)
-- [ ] Graceful degradation: no git → skip risk, no AI → skip AI section
+- [x] Graceful degradation: no git → skip risk, no AI → skip AI section
 
 **Exit Criteria**: Risk scores appear in all output formats. AI analysis < 20s.
 Exit codes distinguish health (10/20) from errors (1). `repostat init` creates
