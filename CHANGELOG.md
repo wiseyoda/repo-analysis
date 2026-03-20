@@ -7,6 +7,18 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-03-20
+
+### Added
+- `repostat trend` subcommand with Unicode sparkline charts (▁▂▃▄▅▆▇█) across all snapshots
+- Git log integration: total commits, unique contributors, per-week activity (commits, lines added/removed)
+- Snapshot comparison support via `load_all()` for loading entire snapshot history
+- Cross-repo index at `~/.repostat/repos.json` tracking all analyzed repositories
+- `repostat list` subcommand showing tracked repos with last-analyzed date and snapshot count
+- Inline sparklines in the main dashboard (Files/Lines rows) when 3+ snapshots exist
+- CLI refactored to subcommands while preserving backward compatibility (default = analyze)
+- Feature spec: docs/specs/history-trends.md
+
 ## [0.6.0] - 2026-03-20
 
 ### Added
