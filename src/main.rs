@@ -79,6 +79,8 @@ fn main() {
     all_functions.sort_by(|a, b| b.1.cyclomatic.cmp(&a.1.cyclomatic));
     let hotspots: Vec<_> = all_functions.into_iter().take(10).collect();
 
+    let dep_summary = metrics::dependencies::summarize_dependencies(&args.path);
+
     let previous = snapshot::store::load_latest(&args.path).ok().flatten();
 
     let snap = snapshot::Snapshot::from_aggregate(&agg, snapshot::current_git_sha(), &hotspots);
@@ -105,9 +107,14 @@ fn main() {
     } else {
         let color = report::color::is_color_enabled();
         let mut stdout = std::io::stdout().lock();
-        if let Err(e) =
-            report::dashboard::render(&agg, diff.as_ref(), &hotspots, &mut stdout, color)
-        {
+        if let Err(e) = report::dashboard::render(
+            &agg,
+            diff.as_ref(),
+            &hotspots,
+            &dep_summary,
+            &mut stdout,
+            color,
+        ) {
             eprintln!("error: failed to render dashboard: {e}");
             process::exit(2);
         }
