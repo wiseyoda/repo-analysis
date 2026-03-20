@@ -1,5 +1,6 @@
 //! repostat — Analyze repository complexity and track coding progress.
 
+use std::path::Path;
 use std::process;
 
 use rayon::prelude::*;
@@ -14,14 +15,23 @@ mod scanner;
 mod snapshot;
 
 fn main() {
-    let args = match cli::parse_and_validate() {
-        Ok(a) => a,
+    let command = match cli::parse_and_validate() {
+        Ok(c) => c,
         Err(e) => {
             eprintln!("error: {e}");
             process::exit(1);
         }
     };
 
+    match command {
+        cli::ValidatedCommand::Analyze(args) => run_analyze(&args),
+        cli::ValidatedCommand::Trend(args) => run_trend(&args.path),
+        cli::ValidatedCommand::List => run_list(),
+    }
+}
+
+/// Run the default analyze command.
+fn run_analyze(args: &cli::AnalyzeArgs) {
     let config = match config::Config::load(&args.path) {
         Ok(c) => c,
         Err(e) => {
@@ -101,6 +111,9 @@ fn main() {
         eprintln!("warning: failed to write snapshot: {e}");
     }
 
+    // Register in cross-repo index
+    snapshot::index::register_repo(&args.path);
+
     let diff = previous.map(|prev| snapshot::diff::diff(&snap, &prev));
 
     if args.json {
@@ -132,5 +145,38 @@ fn main() {
             eprintln!("error: failed to render dashboard: {e}");
             process::exit(2);
         }
+    }
+}
+
+/// Run the trend subcommand.
+fn run_trend(target_dir: &Path) {
+    let snapshots = match snapshot::store::load_all(target_dir) {
+        Ok(s) => s,
+        Err(e) => {
+            eprintln!("error: failed to load snapshots: {e}");
+            process::exit(1);
+        }
+    };
+
+    if snapshots.is_empty() {
+        eprintln!("No snapshots found. Run `repostat` first to create one.");
+        return;
+    }
+
+    let color = report::color::is_color_enabled();
+    let mut stdout = std::io::stdout().lock();
+    if let Err(e) = report::trend::render(&snapshots, &mut stdout, color) {
+        eprintln!("error: failed to render trends: {e}");
+        process::exit(2);
+    }
+}
+
+/// Run the list subcommand.
+fn run_list() {
+    let color = report::color::is_color_enabled();
+    let mut stdout = std::io::stdout().lock();
+    if let Err(e) = snapshot::index::render_list(&mut stdout, color) {
+        eprintln!("error: failed to list repos: {e}");
+        process::exit(2);
     }
 }

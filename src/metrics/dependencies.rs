@@ -116,7 +116,11 @@ fn count_transitive_deps(dir: &Path) -> Option<usize> {
         }
     }
 
-    if found_any { Some(total) } else { None }
+    if found_any {
+        Some(total)
+    } else {
+        None
+    }
 }
 
 /// Count entries in a specific lock file.
