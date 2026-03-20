@@ -54,6 +54,13 @@ pub(crate) enum Command {
         #[arg(long)]
         force: bool,
     },
+    /// Analyze only files changed since a revision.
+    Diff {
+        /// Git revision spec (e.g., HEAD~5).
+        revspec: String,
+        /// Path to the repository [default: current directory].
+        path: Option<PathBuf>,
+    },
 }
 
 /// Parsed and validated CLI arguments.
@@ -73,6 +80,16 @@ pub(crate) enum ValidatedCommand {
         /// Whether to overwrite existing config.
         force: bool,
     },
+    /// Analyze changed files since a revision.
+    Diff(DiffArgs),
+}
+
+/// Arguments for the diff subcommand.
+pub(crate) struct DiffArgs {
+    /// Git revision spec.
+    pub(crate) revspec: String,
+    /// Validated target directory path.
+    pub(crate) path: PathBuf,
 }
 
 /// Arguments for the analyze (default) subcommand.
@@ -106,6 +123,10 @@ pub(crate) fn parse_and_validate() -> anyhow::Result<ValidatedCommand> {
         Some(Command::Completions { shell }) => Ok(ValidatedCommand::Completions(shell)),
         Some(Command::Manpage) => Ok(ValidatedCommand::Manpage),
         Some(Command::Init { force }) => Ok(ValidatedCommand::Init { force }),
+        Some(Command::Diff { revspec, path }) => {
+            let path = resolve_path(path)?;
+            Ok(ValidatedCommand::Diff(DiffArgs { revspec, path }))
+        }
         None => {
             let path = resolve_path(args.path)?;
             Ok(ValidatedCommand::Analyze(AnalyzeArgs {

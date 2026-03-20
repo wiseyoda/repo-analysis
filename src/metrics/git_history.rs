@@ -172,6 +172,32 @@ fn iso_week_from_date(date_str: &str) -> Option<String> {
     Some(format!("{}-W{:02}", iso_week.year(), iso_week.week()))
 }
 
+/// Get file paths changed between a revision and HEAD.
+///
+/// Runs `git diff --name-only <revspec>..HEAD` and returns the paths.
+/// Returns an error message if git fails.
+pub(crate) fn changed_files(dir: &Path, revspec: &str) -> Result<Vec<PathBuf>, String> {
+    let output = Command::new("git")
+        .args(["diff", "--name-only", &format!("{revspec}..HEAD")])
+        .current_dir(dir)
+        .output()
+        .map_err(|e| format!("failed to run git: {e}"))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("git diff failed: {}", stderr.trim()));
+    }
+
+    let text = String::from_utf8_lossy(&output.stdout);
+    let paths: Vec<PathBuf> = text
+        .lines()
+        .filter(|l| !l.trim().is_empty())
+        .map(|l| dir.join(l.trim()))
+        .collect();
+
+    Ok(paths)
+}
+
 /// Collect per-file commit counts over the last 6 months.
 ///
 /// Returns a map of file path → number of commits touching that file.

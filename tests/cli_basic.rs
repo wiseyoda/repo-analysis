@@ -113,6 +113,31 @@ fn init_force_overwrites() {
 }
 
 #[test]
+fn diff_shows_changed_files() {
+    // Run diff on the current repo (which is a git repo)
+    let output = repostat()
+        .args(["diff", "HEAD~1"])
+        .output()
+        .expect("failed to run");
+    let code = output.status.code().unwrap_or(1);
+    // Should succeed (0) or show health codes (10/20) or show "no files changed"
+    assert!(
+        code == 0 || code == 10 || code == 20,
+        "diff should not fail with tool error, got {code}",
+    );
+}
+
+#[test]
+fn diff_errors_on_non_git_dir() {
+    let dir = TempDir::new().unwrap();
+    repostat()
+        .args(["diff", "HEAD~1", dir.path().to_str().unwrap()])
+        .assert()
+        .failure()
+        .code(1);
+}
+
+#[test]
 fn warns_on_empty_directory() {
     let dir = TempDir::new().unwrap();
     repostat()

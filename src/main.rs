@@ -36,6 +36,7 @@ fn main() {
             }
         }
         cli::ValidatedCommand::Init { force } => run_init(force),
+        cli::ValidatedCommand::Diff(args) => run_diff(&args),
     }
 }
 
@@ -316,4 +317,98 @@ fn run_init(force: bool) {
     }
 
     eprintln!("Created .repostat.toml with default settings.");
+}
+
+/// Run the diff subcommand — analyze only changed files.
+fn run_diff(args: &cli::DiffArgs) {
+    let changed = match metrics::git_history::changed_files(&args.path, &args.revspec) {
+        Ok(files) => files,
+        Err(e) => {
+            eprintln!("error: {e}");
+            process::exit(1);
+        }
+    };
+
+    if changed.is_empty() {
+        eprintln!("No files changed in {}..HEAD", args.revspec);
+        return;
+    }
+
+    let config = match config::Config::load(&args.path) {
+        Ok(c) => c,
+        Err(e) => {
+            eprintln!("error: {e}");
+            process::exit(1);
+        }
+    };
+
+    let files = match scanner::scan(&args.path, &config) {
+        Ok(f) => f,
+        Err(e) => {
+            eprintln!("error: {e}");
+            process::exit(1);
+        }
+    };
+
+    // Filter to only changed files
+    let changed_set: std::collections::HashSet<_> = changed.iter().map(|p| p.as_path()).collect();
+
+    let analyzed: Vec<_> = files
+        .iter()
+        .filter(|f| !f.is_minified && !f.is_generated)
+        .filter(|f| changed_set.contains(f.path.as_path()))
+        .filter_map(|f| {
+            let content = match std::fs::read_to_string(&f.path) {
+                Ok(c) => c,
+                Err(e) => {
+                    eprintln!("warning: skipped {}: {e}", f.path.display());
+                    return None;
+                }
+            };
+            let lines = metrics::loc::count_lines(&content, f.language);
+            let functions = f
+                .language
+                .and_then(|lang| metrics::complexity::extract_functions(&content, lang))
+                .unwrap_or_default();
+            Some((f, lines, functions))
+        })
+        .collect();
+
+    eprintln!(
+        "Analyzing {} changed file{} ({}..HEAD)",
+        analyzed.len(),
+        if analyzed.len() == 1 { "" } else { "s" },
+        args.revspec,
+    );
+
+    let file_results: Vec<_> = analyzed
+        .iter()
+        .map(|(f, lines, _)| metrics::aggregate::FileResult {
+            language: f.language,
+            lines: *lines,
+        })
+        .collect();
+
+    let agg = metrics::aggregate::aggregate(&file_results);
+
+    let color = report::color::is_color_enabled();
+    let mut stdout = std::io::stdout().lock();
+
+    let dep_summary = metrics::dependencies::DependencySummary::default();
+    let dashboard_data = report::dashboard::DashboardData {
+        agg: &agg,
+        diff: None,
+        hotspots: &[],
+        dep_summary: &dep_summary,
+        doc_metrics: None,
+        ai_result: None,
+        history_lines: vec![],
+        history_files: vec![],
+        skipped_files: 0,
+        risk_entries: &[],
+    };
+    if let Err(e) = report::dashboard::render(&dashboard_data, &mut stdout, color) {
+        eprintln!("error: failed to render dashboard: {e}");
+        process::exit(2);
+    }
 }
