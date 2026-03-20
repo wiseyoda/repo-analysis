@@ -156,8 +156,8 @@ See `docs/designs/phase-9-health-check.md` for full design.
 - [x] Risk scores in snapshots (raw inputs: churn_count, max_complexity)
 - [x] Risk scores in dashboard, JSON, markdown output
 - [x] Parallel AI skills via `rayon::scope` (6 concurrent invocations)
-- [ ] Health score exit codes (0=ok, 1=error, 10=warning, 20=critical)
-- [ ] Health thresholds in config (`[health]` section in .repostat.toml)
+- [x] Health score exit codes (0=ok, 1=error, 10=warning, 20=critical)
+- [x] Health thresholds in config (`[health]` section in .repostat.toml)
 - [ ] `repostat init` command with --force flag
 - [ ] `repostat diff HEAD~N` scoped analysis (commits only, changed-files filter)
 - [ ] HTML dashboard output with pure SVG charts (`--html` flag)

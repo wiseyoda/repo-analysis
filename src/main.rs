@@ -225,6 +225,24 @@ fn run_analyze(args: &cli::AnalyzeArgs) {
         eprintln!("  report:       {:.1}s", report_dur.as_secs_f64());
         eprintln!("  total:        {:.1}s", total_dur.as_secs_f64());
     }
+
+    // Evaluate health exit code from analysis metrics
+    let max_complexity = analysis
+        .hotspots
+        .iter()
+        .map(|(_, f)| f.cyclomatic)
+        .max()
+        .unwrap_or(0);
+    let max_func_lines = analysis
+        .hotspots
+        .iter()
+        .map(|(_, f)| f.line_count)
+        .max()
+        .unwrap_or(0);
+    let health_exit = config.health.evaluate(max_complexity, max_func_lines);
+    if health_exit != 0 {
+        process::exit(health_exit);
+    }
 }
 
 /// Run the trend subcommand.
