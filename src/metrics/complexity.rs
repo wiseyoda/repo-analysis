@@ -15,6 +15,19 @@ pub(crate) struct FileComplexity {
     pub(crate) average: f64,
 }
 
+/// Cognitive complexity result for a file.
+///
+/// SonarQube-style: each control flow break adds 1, plus the current nesting depth.
+#[derive(Debug, Clone, Default)]
+pub(crate) struct CognitiveComplexity {
+    /// Total cognitive complexity across all functions.
+    pub(crate) total: usize,
+    /// Number of functions analyzed.
+    pub(crate) function_count: usize,
+    /// Average cognitive complexity per function.
+    pub(crate) average: f64,
+}
+
 /// Parse source code into a tree-sitter syntax tree.
 ///
 /// Returns `None` if the language has no tree-sitter grammar available.
@@ -62,7 +75,122 @@ pub(crate) fn cyclomatic_complexity(content: &str, language: Language) -> Option
     })
 }
 
-/// Recursively find function nodes and compute their complexity.
+/// Calculate cognitive complexity for a file (SonarQube-style).
+///
+/// Increments: +1 for each flow break, +nesting_depth for nested flow breaks.
+pub(crate) fn cognitive_complexity(
+    content: &str,
+    language: Language,
+) -> Option<CognitiveComplexity> {
+    let tree = parse(content, language)?;
+    let root = tree.root_node();
+
+    let mut total = 0;
+    let mut function_count = 0;
+
+    collect_cognitive_complexities(root, &mut total, &mut function_count);
+
+    if function_count == 0 {
+        let score = cognitive_score(root, 0);
+        return Some(CognitiveComplexity {
+            total: score,
+            function_count: 0,
+            average: 0.0,
+        });
+    }
+
+    let average = if function_count > 0 {
+        total as f64 / function_count as f64
+    } else {
+        0.0
+    };
+
+    Some(CognitiveComplexity {
+        total,
+        function_count,
+        average,
+    })
+}
+
+/// Recursively find functions and compute cognitive complexity.
+fn collect_cognitive_complexities(node: Node, total: &mut usize, count: &mut usize) {
+    if is_function_node(node.kind()) {
+        let score = cognitive_score(node, 0);
+        *total += score;
+        *count += 1;
+        return;
+    }
+
+    let child_count = node.child_count();
+    for i in 0..child_count {
+        if let Some(child) = node.child(i) {
+            collect_cognitive_complexities(child, total, count);
+        }
+    }
+}
+
+/// Compute cognitive complexity score for a subtree at a given nesting depth.
+fn cognitive_score(node: Node, nesting: usize) -> usize {
+    let mut score = 0;
+
+    let child_count = node.child_count();
+    for i in 0..child_count {
+        if let Some(child) = node.child(i) {
+            if is_function_node(child.kind()) {
+                continue; // Don't recurse into nested functions
+            }
+
+            if is_nesting_increment(child.kind()) {
+                // +1 for the structure itself, +nesting for depth
+                score += 1 + nesting;
+                // Recurse into children with increased nesting
+                score += cognitive_score(child, nesting + 1);
+            } else if is_cognitive_increment(child.kind()) {
+                // +1 without nesting (e.g., else, else if)
+                score += 1;
+                score += cognitive_score(child, nesting);
+            } else {
+                score += cognitive_score(child, nesting);
+            }
+        }
+    }
+
+    score
+}
+
+/// Node kinds that increment cognitive complexity AND increase nesting.
+fn is_nesting_increment(kind: &str) -> bool {
+    matches!(
+        kind,
+        "if_expression"
+            | "if_statement"
+            | "if_let_expression"
+            | "while_expression"
+            | "while_statement"
+            | "while_let_expression"
+            | "for_expression"
+            | "for_statement"
+            | "for_in_statement"
+            | "loop_expression"
+            | "match_expression"
+            | "switch_statement"
+            | "catch_clause"
+            | "except_clause"
+            | "rescue"
+            | "ternary_expression"
+            | "conditional_expression"
+    )
+}
+
+/// Node kinds that increment cognitive complexity but DON'T increase nesting.
+fn is_cognitive_increment(kind: &str) -> bool {
+    matches!(
+        kind,
+        "else_clause" | "elif_clause" | "else_if_clause" | "boolean_operator"
+    )
+}
+
+/// Recursively find function nodes and compute their cyclomatic complexity.
 fn collect_function_complexities(node: Node, source: &[u8], total: &mut usize, count: &mut usize) {
     if is_function_node(node.kind()) {
         let complexity = 1 + count_decision_points(node, source);
@@ -358,5 +486,62 @@ fn complex() { if true { } if true { } }
     fn unsupported_language_returns_none() {
         let result = cyclomatic_complexity("SELECT 1;", Language::SQL);
         assert!(result.is_none());
+    }
+
+    // --- Cognitive complexity tests ---
+
+    #[test]
+    fn cognitive_simple_function_is_zero() {
+        let code = "fn hello() { println!(\"hi\"); }";
+        let result = cognitive_complexity(code, Language::Rust).unwrap();
+        assert_eq!(result.total, 0, "simple function = cognitive 0");
+    }
+
+    #[test]
+    fn cognitive_single_if_is_one() {
+        let code = "fn check(x: i32) { if x > 0 { return; } }";
+        let result = cognitive_complexity(code, Language::Rust).unwrap();
+        assert!(
+            result.total >= 1,
+            "single if = at least cognitive 1, got {}",
+            result.total
+        );
+    }
+
+    #[test]
+    fn cognitive_nested_if_adds_nesting_penalty() {
+        let code = r#"
+fn check(x: i32, y: i32) {
+    if x > 0 {
+        if y > 0 {
+            return;
+        }
+    }
+}
+"#;
+        let result = cognitive_complexity(code, Language::Rust).unwrap();
+        // outer if = +1 (nesting 0), inner if = +1+1 (nesting 1) = total 3
+        assert!(
+            result.total >= 3,
+            "nested if should have cognitive >= 3, got {}",
+            result.total
+        );
+    }
+
+    #[test]
+    fn cognitive_unsupported_returns_none() {
+        let result = cognitive_complexity("SELECT 1;", Language::SQL);
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn cognitive_python_nested() {
+        let code = "def check(x, y):\n    if x > 0:\n        if y > 0:\n            return True\n    return False\n";
+        let result = cognitive_complexity(code, Language::Python).unwrap();
+        assert!(
+            result.total >= 3,
+            "nested Python ifs should have cognitive >= 3, got {}",
+            result.total
+        );
     }
 }
