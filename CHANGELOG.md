@@ -7,6 +7,21 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-03-20
+
+### Added
+- Shell completions for bash, zsh, and fish via `repostat completions <shell>`
+- Man page generation via `repostat manpage`
+- GitHub Actions CI pipeline: fmt, clippy, test, build on every PR
+- GitHub Actions release workflow: pre-built binaries for macOS (arm64/x64) and Linux (x64)
+- Homebrew formula template for installation via `brew install`
+- Cargo.toml metadata for `cargo install` from crates.io
+- Complete README with install instructions, usage examples, configuration, and dogfooding output
+
+### Changed
+- Bumped Cargo.toml version to match release tags
+- CI now runs unit tests only (skips integration tests that require Claude CLI)
+
 ## [0.7.0] - 2026-03-20
 
 ### Added

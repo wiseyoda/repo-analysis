@@ -4,8 +4,8 @@
 
 ## Current Task
 
-- **Phase:** 6
-- **Task:** Phase complete — all 7 tasks done
+- **Phase:** 7
+- **Task:** ALL PHASES COMPLETE
 - **Status:** idle
 - **Blocker:** none
 - **Started:** —
@@ -28,31 +28,28 @@
 - [x] All 13 tasks — completed 2026-03-20 (shipped as v0.6.0, PR #5 merged)
 
 ### Phase 6: History & Trends
-- [x] repostat trend subcommand with sparkline charts — completed 2026-03-20
-- [x] Git log integration — completed 2026-03-20
-- [x] Commit frequency and contributor count — completed 2026-03-20
-- [x] Snapshot comparison by timestamp or SHA — completed 2026-03-20
-- [x] Cross-repo index at ~/.repostat/repos.json — completed 2026-03-20
-- [x] repostat list subcommand — completed 2026-03-20
-- [x] Inline sparklines in dashboard — completed 2026-03-20
+- [x] All 7 tasks — completed 2026-03-20 (shipped as v0.7.0, PR #6 merged)
 
-### Phase 7
-- [ ] Not started
+### Phase 7: Polish & Distribution
+- [x] Shell completions (bash, zsh, fish) — completed 2026-03-20
+- [x] CI pipeline — completed 2026-03-20
+- [x] README — completed 2026-03-20
+- [x] cargo install metadata — completed 2026-03-20
+- [x] GitHub Releases workflow — completed 2026-03-20
+- [x] Homebrew formula — completed 2026-03-20
+- [x] Man page generation — completed 2026-03-20
+- [x] Dogfooding — completed 2026-03-20
 
 ## Learnings
 
 - 2026-03-19: tree-sitter 0.25 needed for grammar ABI compatibility.
 - 2026-03-19: Language enum match arms inflate cyclomatic complexity scores.
 - 2026-03-19: #[allow(dead_code)] on module declaration silences all items.
-- 2026-03-20: Cargo.toml dep parsing uses simple line-by-line under [dependencies] sections — doesn't handle inline tables perfectly but works for counting.
-- 2026-03-20: Lock file parsers are ecosystem-specific; Cargo.lock and poetry.lock use [[package]] TOML blocks, package-lock.json uses JSON objects.
-- 2026-03-20: README completeness scoring uses heading keyword matching; license detection falls back to body text search for common license names.
-- 2026-03-20: Dir coverage checks parent directory for docs, covering the pattern where docs/ sits alongside src/.
-- 2026-03-20: Must use --model haiku for Claude CLI invocation to avoid defaulting to slow model (ADR-007).
-- 2026-03-20: Dashboard render() hit clippy too_many_arguments at 9 params; refactored to DashboardData struct.
-- 2026-03-20: Lenient JSON parsing needs 3 strategies: direct parse, code block extraction, brace-delimited substring.
+- 2026-03-20: Must use --model haiku for Claude CLI invocation to avoid defaulting to slow model.
+- 2026-03-20: Dashboard render() hit clippy too_many_arguments; refactored to DashboardData struct.
 - 2026-03-20: CLI refactored to subcommands while preserving backward compat (default = analyze).
-- 2026-03-20: Sparkline uses 8-level Unicode block chars ▁▂▃▄▅▆▇█, needs min 3 snapshots to display.
+- 2026-03-20: Sparkline uses 8-level Unicode block chars, needs min 3 snapshots to display.
+- 2026-03-20: clap_complete and clap_mangen provide shell completions and man pages via subcommands.
 
 ## Session Log
 
@@ -62,5 +59,6 @@
 | 2026-03-19 | Phase 2 (8 tasks) | Shipped as v0.3.0, PR #2 merged |
 | 2026-03-20 | Phase 3 (7 tasks) | Manifest parsing, lock files, coupling graph, fan-in/out, dashboard, snapshots |
 | 2026-03-20 | Phase 4 (6 tasks) | Doc inventory, ratio, README scoring, dir coverage, dashboard, snapshots |
-| 2026-03-20 | Phase 5 (13 tasks) | CLI detection, skill files, invocation, parsing, 6 skills, dashboard, snapshots, graceful degradation |
-| 2026-03-20 | Phase 6 (7 tasks) | Subcommands, trend sparklines, git history, cross-repo index, list, inline sparklines |
+| 2026-03-20 | Phase 5 (13 tasks) | CLI detection, skill files, invocation, parsing, 6 skills, dashboard, snapshots |
+| 2026-03-20 | Phase 6 (7 tasks) | Subcommands, trend sparklines, git history, cross-repo index, inline sparklines |
+| 2026-03-20 | Phase 7 (8 tasks) | Shell completions, CI, README, Cargo.toml, releases, Homebrew, man pages, dogfooding |
