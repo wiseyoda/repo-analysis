@@ -5,10 +5,10 @@
 ## Current Task
 
 - **Phase:** 2
-- **Task:** Tree-sitter integration and grammar compilation (top 10 languages)
-- **Status:** in-progress
+- **Task:** Phase complete — all 8 tasks done
+- **Status:** idle
 - **Blocker:** none
-- **Started:** 2026-03-19
+- **Started:** —
 
 ## Progress
 
@@ -16,29 +16,27 @@
 - [x] All 15 tasks — completed 2026-03-19 (shipped as v0.2.0, PR #1 merged)
 
 ### Phase 2: Complexity Analysis
-- [ ] Tree-sitter integration and grammar compilation (top 10 languages)
-- [ ] Cyclomatic complexity calculation per function and per file
-- [ ] Cognitive complexity calculation (nested-logic weighting)
-- [ ] Function extraction: name, line count, complexity per function
-- [ ] File size and function size threshold flagging
-- [ ] Complexity hotspots section in the dashboard (top N worst)
-- [ ] Regex fallback for unsupported languages
-- [ ] Complexity data in snapshots for trend tracking
+- [x] Tree-sitter integration (10 grammars) — completed 2026-03-19
+- [x] Cyclomatic complexity — completed 2026-03-19
+- [x] Cognitive complexity — completed 2026-03-19
+- [x] Function extraction — completed 2026-03-19
+- [x] Threshold flagging — completed 2026-03-19
+- [x] Dashboard hotspots — completed 2026-03-19
+- [x] Regex fallback — completed 2026-03-19
+- [x] Complexity in snapshots — completed 2026-03-19
 
 ### Phase 3–7
 - [ ] Not started
 
 ## Learnings
 
-- 2026-03-19: Rust 1.93.1 on this machine; edition 2024 compiles without issues.
-- 2026-03-19: Clippy treats pub(crate) fields as dead_code if not read in non-test code.
-- 2026-03-19: The `ignore` crate needs a git init in test dirs for .gitignore to work.
-- 2026-03-19: Added `globset` crate for config pattern matching.
-- 2026-03-19: Clippy upper_case_acronyms lint — use #[allow] on the Language enum.
-- 2026-03-19: Block comment detection: check if close marker appears after open on same line.
+- 2026-03-19: tree-sitter 0.25 needed (0.24 has ABI mismatch with newer grammar crates like python 0.25, go 0.25).
+- 2026-03-19: Language enum match arms for display_name/from_extension have high CC (50+) but are trivially simple — match exhaustiveness inflates cyclomatic.
+- 2026-03-19: #[allow(dead_code)] on module declaration in mod.rs silences all items in that module.
 
 ## Session Log
 
 | Date | Tasks Completed | Notes |
 |------|----------------|-------|
 | 2026-03-19 | Phase 1 (15 tasks) | Shipped as v0.2.0, PR #1 merged |
+| 2026-03-19 | Phase 2 (8 tasks) | Tree-sitter, cyclomatic, cognitive, functions, thresholds, hotspots, regex, snapshots |
