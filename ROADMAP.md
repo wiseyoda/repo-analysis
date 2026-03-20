@@ -68,12 +68,12 @@ graph identifies the most-connected modules.
 
 **Goal**: Measure and score documentation coverage and quality.
 
-- [ ] Markdown file inventory (count, lines, characters)
-- [ ] Doc-to-code ratio calculation
-- [ ] README completeness checker (install, usage, API, contributing, license sections)
-- [ ] Per-directory documentation coverage
-- [ ] Documentation section in dashboard
-- [ ] Documentation metrics in snapshots
+- [x] Markdown file inventory (count, lines, characters)
+- [x] Doc-to-code ratio calculation
+- [x] README completeness checker (install, usage, API, contributing, license sections)
+- [x] Per-directory documentation coverage
+- [x] Documentation section in dashboard
+- [x] Documentation metrics in snapshots
 
 **Exit Criteria**: README scoring matches manual evaluation. Doc-to-code ratio is accurate.
 

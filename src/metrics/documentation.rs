@@ -35,8 +35,10 @@ pub(crate) struct DocInventory {
 #[derive(Debug, Clone)]
 pub(crate) struct DocToCodeRatio {
     /// Lines of documentation (markdown).
+    #[allow(dead_code)] // kept for JSON/markdown report consumers
     pub(crate) doc_lines: usize,
     /// Lines of code.
+    #[allow(dead_code)] // kept for JSON/markdown report consumers
     pub(crate) code_lines: usize,
     /// Ratio: doc_lines / code_lines (0.0 if no code).
     pub(crate) ratio: f64,
@@ -55,6 +57,7 @@ pub(crate) struct ReadmeSection {
 #[derive(Debug, Clone)]
 pub(crate) struct ReadmeScore {
     /// Path to the README file (None if not found).
+    #[allow(dead_code)] // kept for JSON/markdown report consumers
     pub(crate) readme_path: Option<PathBuf>,
     /// Sections checked and whether they were found.
     pub(crate) sections: Vec<ReadmeSection>,
@@ -66,6 +69,7 @@ pub(crate) struct ReadmeScore {
 #[derive(Debug, Clone)]
 pub(crate) struct DirCoverageEntry {
     /// Directory path (relative to repo root).
+    #[allow(dead_code)] // kept for JSON/markdown report consumers
     pub(crate) dir: PathBuf,
     /// Whether documentation exists for this directory.
     pub(crate) has_docs: bool,

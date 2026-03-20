@@ -27,6 +27,9 @@ pub(crate) struct Snapshot {
     /// Dependency information.
     #[serde(default)]
     pub(crate) dependencies: Option<SnapshotDependencies>,
+    /// Documentation metrics.
+    #[serde(default)]
+    pub(crate) documentation: Option<SnapshotDocumentation>,
 }
 
 /// Dependency data stored in a snapshot.
@@ -51,6 +54,25 @@ pub(crate) struct SnapshotManifest {
     pub(crate) ecosystem: String,
     /// Number of direct dependencies.
     pub(crate) deps: usize,
+}
+
+/// Documentation metrics stored in a snapshot.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub(crate) struct SnapshotDocumentation {
+    /// Number of markdown files.
+    pub(crate) file_count: usize,
+    /// Total lines across all markdown files.
+    pub(crate) total_lines: usize,
+    /// Total characters across all markdown files.
+    pub(crate) total_chars: usize,
+    /// Doc-to-code ratio.
+    pub(crate) doc_to_code_ratio: f64,
+    /// README completeness score (0.0 to 1.0).
+    pub(crate) readme_score: f64,
+    /// README sections that were found.
+    pub(crate) readme_sections: Vec<String>,
+    /// Per-directory documentation coverage (0.0 to 1.0).
+    pub(crate) dir_coverage: f64,
 }
 
 /// A complexity hotspot stored in a snapshot.
@@ -91,12 +113,13 @@ pub(crate) struct SnapshotLanguageEntry {
 }
 
 impl Snapshot {
-    /// Build a snapshot from aggregate metrics, hotspots, and dependency data.
+    /// Build a snapshot from aggregate metrics, hotspots, dependency, and doc data.
     pub(crate) fn from_aggregate(
         agg: &crate::metrics::aggregate::AggregateMetrics,
         git_sha: Option<String>,
         hotspots: &[(String, crate::metrics::complexity::FunctionInfo)],
         dep_summary: &crate::metrics::dependencies::DependencySummary,
+        doc_metrics: Option<&crate::metrics::documentation::DocumentationMetrics>,
     ) -> Self {
         let mut by_language = BTreeMap::new();
         for (lang, metrics) in &agg.by_language {
@@ -153,6 +176,22 @@ impl Snapshot {
             })
         };
 
+        let documentation = doc_metrics.map(|docs| SnapshotDocumentation {
+            file_count: docs.inventory.file_count,
+            total_lines: docs.inventory.total_lines,
+            total_chars: docs.inventory.total_chars,
+            doc_to_code_ratio: docs.doc_to_code.ratio,
+            readme_score: docs.readme_score.score,
+            readme_sections: docs
+                .readme_score
+                .sections
+                .iter()
+                .filter(|s| s.present)
+                .map(|s| s.name.to_string())
+                .collect(),
+            dir_coverage: docs.dir_coverage.coverage,
+        });
+
         Self {
             timestamp: Utc::now(),
             git_sha,
@@ -161,6 +200,7 @@ impl Snapshot {
             by_language,
             hotspots: snapshot_hotspots,
             dependencies,
+            documentation,
         }
     }
 }
@@ -226,7 +266,8 @@ mod tests {
         };
 
         let dep_default = crate::metrics::dependencies::DependencySummary::default();
-        let snap = Snapshot::from_aggregate(&agg, Some("abc123".to_string()), &[], &dep_default);
+        let snap =
+            Snapshot::from_aggregate(&agg, Some("abc123".to_string()), &[], &dep_default, None);
         assert_eq!(snap.total_files, 3);
         assert_eq!(snap.total_lines.code, 80);
         assert_eq!(snap.git_sha, Some("abc123".to_string()));
@@ -263,10 +304,70 @@ mod tests {
             by_language,
             hotspots: vec![],
             dependencies: None,
+            documentation: None,
         };
 
         let json = serde_json::to_string_pretty(&snap).unwrap();
         assert!(json.contains("\"total_files\": 1"));
         assert!(json.contains("\"Rust\""));
+    }
+}
+
+#[cfg(test)]
+mod doc_tests {
+    use super::*;
+
+    #[test]
+    fn snapshot_with_documentation_serializes() {
+        let doc = SnapshotDocumentation {
+            file_count: 5,
+            total_lines: 200,
+            total_chars: 8000,
+            doc_to_code_ratio: 0.15,
+            readme_score: 0.8,
+            readme_sections: vec!["install".to_string(), "usage".to_string()],
+            dir_coverage: 0.75,
+        };
+
+        let json = serde_json::to_string_pretty(&doc).unwrap();
+        assert!(json.contains("\"file_count\": 5"));
+        assert!(json.contains("\"doc_to_code_ratio\": 0.15"));
+        assert!(json.contains("\"readme_score\": 0.8"));
+        assert!(json.contains("\"install\""));
+    }
+
+    #[test]
+    fn snapshot_documentation_roundtrips() {
+        let doc = SnapshotDocumentation {
+            file_count: 3,
+            total_lines: 100,
+            total_chars: 5000,
+            doc_to_code_ratio: 0.1,
+            readme_score: 0.6,
+            readme_sections: vec!["install".to_string(), "license".to_string()],
+            dir_coverage: 0.5,
+        };
+
+        let json = serde_json::to_string(&doc).unwrap();
+        let parsed: SnapshotDocumentation = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed.file_count, 3);
+        assert_eq!(parsed.readme_sections.len(), 2);
+        assert!((parsed.dir_coverage - 0.5).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn snapshot_without_documentation_deserializes() {
+        // Simulate an old snapshot without documentation field
+        let json = r#"{
+            "timestamp": "2024-01-01T00:00:00Z",
+            "git_sha": null,
+            "total_files": 1,
+            "total_lines": {"total": 10, "code": 8, "blank": 1, "comment": 1},
+            "by_language": {},
+            "hotspots": []
+        }"#;
+
+        let snap: Snapshot = serde_json::from_str(json).unwrap();
+        assert!(snap.documentation.is_none());
     }
 }
