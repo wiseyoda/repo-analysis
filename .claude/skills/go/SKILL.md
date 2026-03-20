@@ -54,7 +54,7 @@ It does NOT implement features itself — it delegates to specialists:
 | Need to clean up code | **`/refactor <target>`** |
 | Need structural health check | **`/analyze-arch`** |
 | Something is broken | **`/fix <description>`** |
-| Phase is complete, time to PR | **`/ship`** |
+| Phase is complete, time to PR | **`/pr`** |
 | Scaffolding (Cargo.toml, CI) | Direct execution (no skill needed) |
 
 ---
@@ -218,7 +218,7 @@ When all items in a phase are checked:
 4. Check exit criteria from ROADMAP.md
 5. Use AskUserQuestion:
    - "Phase N complete. Exit criteria: [list]. Ready to ship?"
-   - A) Run `/ship` to open PR
+   - A) Run `/pr` to open PR
    - B) Keep polishing
    - C) Stop here
 
@@ -292,4 +292,4 @@ Print this ONLY when stopping (phase complete, blocker, or error):
 7. **Update ROADMAP.md checkboxes.** Source of truth for progress.
 8. **Don't skip tasks.** Phase ordering matters.
 9. **Stop gracefully on errors.** Always leave state clean.
-10. **Ship at phase boundaries.** Use `/ship` to PR the phase branch to main.
+10. **Ship at phase boundaries.** Use `/pr` to PR the phase branch to main.

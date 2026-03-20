@@ -46,7 +46,7 @@ This project uses automated enforcement via `.claude/` configuration:
   - `/review` — Pre-commit code review against project standards
   - `/refactor` — Refactor with continuous test verification
   - `/analyze-arch` — Architecture analysis against tech-stack.md
-  - **`/ship`** — Push branch, open PR, bump version, update changelog
+  - **`/pr`** — Push branch, open PR, bump version, update changelog
 
 - **State** (`.repostat/state.md`) — Persistent project state across sessions.
   Updated by `/go`. Tracks current task, progress, learnings, and session log.

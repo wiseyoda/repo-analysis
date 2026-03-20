@@ -1,10 +1,11 @@
 ---
-name: ship
-version: 1.0.0
+name: pr
+version: 2.0.0
 description: |
   Release engineer. Merges main into branch, runs full quality gate, reviews
   diff, bumps VERSION, updates CHANGELOG, commits, pushes, and opens a PR.
-  Use when asked to "ship", "open a PR", "push", or "merge".
+  Use when asked to "open a PR", "push", or "create PR". Note: /ship is
+  the gstack global skill; /pr is the project-specific one.
 disable-model-invocation: false
 user-invocable: true
 allowed-tools:
@@ -20,8 +21,8 @@ allowed-tools:
 
 ## Arguments
 
-- `/ship` — ship current branch (auto-detect base)
-- `/ship <message>` — ship with a custom PR title
+- `/pr` — ship current branch (auto-detect base)
+- `/pr <message>` — ship with a custom PR title
 
 ## Preconditions
 
