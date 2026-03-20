@@ -48,6 +48,7 @@ git log origin/main..HEAD --oneline 2>/dev/null
 ```
 
 If uncommitted changes exist, commit them first:
+
 ```bash
 git add -A && git commit -m "chore: stage uncommitted work before ship"
 ```
@@ -91,6 +92,7 @@ git diff origin/main...HEAD --stat | tail -1
 ```
 
 **Auto-decide:**
+
 - < 50 lines changed → PATCH bump
 - 50+ lines → MINOR bump
 - Major architecture changes → ask user
@@ -137,6 +139,7 @@ git push -u origin $BRANCH
 ```
 
 Create PR:
+
 ```bash
 gh pr create --base main --title "<type>: <summary>" --body "$(cat <<'INNEREOF'
 ## Summary
@@ -172,3 +175,5 @@ INNEREOF
 5. **Auto-decide PATCH.** Only ask for MINOR/MAJOR.
 6. **CHANGELOG is user-facing.** Write what users can DO, not implementation details.
 7. **One commit for version bump.** Everything else should already be committed.
+
+When finished, do not end the session, continue on to the next skill controlled by /go skill.

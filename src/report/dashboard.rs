@@ -4,6 +4,7 @@ use std::io::{self, Write};
 
 use crate::metrics::aggregate::AggregateMetrics;
 use crate::metrics::complexity::FunctionInfo;
+use crate::metrics::dependencies::DependencySummary;
 use crate::snapshot::diff::SnapshotDiff;
 
 use super::color::ColorWriter;
@@ -16,6 +17,7 @@ pub(crate) fn render(
     agg: &AggregateMetrics,
     diff: Option<&SnapshotDiff>,
     hotspots: &[Hotspot],
+    dep_summary: &DependencySummary,
     writer: &mut dyn Write,
     color: bool,
 ) -> io::Result<()> {
@@ -26,6 +28,42 @@ pub(crate) fn render(
     if !hotspots.is_empty() {
         render_hotspots(hotspots, &mut cw)?;
     }
+    if !dep_summary.manifests.is_empty() {
+        render_dependencies(dep_summary, &mut cw)?;
+    }
+    Ok(())
+}
+
+/// Render dependencies section.
+fn render_dependencies(summary: &DependencySummary, cw: &mut ColorWriter) -> io::Result<()> {
+    cw.dim("├────────────────────────────────────────┤")?;
+    cw.newline()?;
+    cw.plain("│ ")?;
+    cw.bold("Dependencies")?;
+    cw.newline()?;
+    cw.dim("│ ─────────────────────────────────────  │")?;
+    cw.newline()?;
+
+    for manifest in &summary.manifests {
+        let name = manifest
+            .file_path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("unknown");
+        cw.plain(&format!(
+            "│  {:<20} {:>3} deps\n",
+            name,
+            manifest.direct_deps.len(),
+        ))?;
+    }
+
+    cw.plain(&format!("│  Total direct: {}\n", summary.total_direct))?;
+    if let Some(transitive) = summary.total_transitive {
+        cw.plain(&format!("│  Total transitive: {transitive}\n"))?;
+    }
+
+    cw.dim("└────────────────────────────────────────┘")?;
+    cw.newline()?;
     Ok(())
 }
 
@@ -213,7 +251,15 @@ mod tests {
     fn renders_without_diff() {
         let agg = make_agg();
         let mut buf = Vec::new();
-        render(&agg, None, &[], &mut buf, false).unwrap();
+        render(
+            &agg,
+            None,
+            &[],
+            &DependencySummary::default(),
+            &mut buf,
+            false,
+        )
+        .unwrap();
         let output = String::from_utf8(buf).unwrap();
 
         assert!(output.contains("repostat"));
@@ -235,7 +281,15 @@ mod tests {
             },
         };
         let mut buf = Vec::new();
-        render(&agg, Some(&diff), &[], &mut buf, false).unwrap();
+        render(
+            &agg,
+            Some(&diff),
+            &[],
+            &DependencySummary::default(),
+            &mut buf,
+            false,
+        )
+        .unwrap();
         let output = String::from_utf8(buf).unwrap();
 
         assert!(output.contains("(+2)"));
@@ -246,7 +300,15 @@ mod tests {
     fn languages_sorted_by_code_lines_descending() {
         let agg = make_agg();
         let mut buf = Vec::new();
-        render(&agg, None, &[], &mut buf, false).unwrap();
+        render(
+            &agg,
+            None,
+            &[],
+            &DependencySummary::default(),
+            &mut buf,
+            false,
+        )
+        .unwrap();
         let output = String::from_utf8(buf).unwrap();
 
         let rust_pos = output.find("Rust").unwrap();
@@ -258,7 +320,15 @@ mod tests {
     fn color_mode_adds_ansi_codes() {
         let agg = make_agg();
         let mut buf = Vec::new();
-        render(&agg, None, &[], &mut buf, true).unwrap();
+        render(
+            &agg,
+            None,
+            &[],
+            &DependencySummary::default(),
+            &mut buf,
+            true,
+        )
+        .unwrap();
         let output = String::from_utf8(buf).unwrap();
         assert!(output.contains("\x1b["), "should contain ANSI codes");
     }
@@ -267,7 +337,15 @@ mod tests {
     fn no_color_mode_has_no_ansi() {
         let agg = make_agg();
         let mut buf = Vec::new();
-        render(&agg, None, &[], &mut buf, false).unwrap();
+        render(
+            &agg,
+            None,
+            &[],
+            &DependencySummary::default(),
+            &mut buf,
+            false,
+        )
+        .unwrap();
         let output = String::from_utf8(buf).unwrap();
         assert!(!output.contains("\x1b["), "should not contain ANSI codes");
     }

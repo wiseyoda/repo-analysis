@@ -70,15 +70,19 @@ Rank by impact. Prioritize: correctness fixes > readability > style.
 For each target (in priority order):
 
 ### 2a. Describe the change
+
 One sentence: what will change and why.
 
 ### 2b. Make ONE change
+
 Apply one focused refactoring. Do not bundle multiple refactorings.
 
 ### 2c. Run tests
+
 ```bash
 cargo test 2>&1
 ```
+
 - **PASS** → continue to 2d
 - **FAIL** → revert immediately: `git checkout -- <changed-files>`. Log the failure. Move to next target.
 
@@ -96,6 +100,7 @@ WTF-LIKELIHOOD:
 ```
 
 **If WTF > 25%:** STOP immediately. Show what you've done. Ask the user:
+
 - "I've made N changes with M reverts. Continuing risks introducing bugs."
 - A) Continue carefully — I trust the test suite
 - B) Stop here — ship what's done
@@ -134,3 +139,5 @@ When refactoring is complete and tests pass, the skill is done. Do NOT print a s
 6. **Self-regulate.** Follow the WTF-likelihood heuristic. When in doubt, stop.
 7. **Never bundle reverts.** If you revert, log what happened and move on.
 8. **Hard cap: 25 changes.** Stop after 25 regardless of remaining opportunities.
+
+When finished, do not end the session, continue on to the next skill controlled by /go skill.

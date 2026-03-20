@@ -49,6 +49,7 @@ find src -name "*.rs" -type f | sort
 Compare against the intended structure in `docs/tech-stack.md`.
 
 **Grade:**
+
 - A: Exact match to intended structure
 - B: Minor deviations (extra utility files, missing empty modules)
 - C: Structural drift (files in wrong modules, unexpected directories)
@@ -67,6 +68,7 @@ cargo tree -d
 Check each dependency against the approved list in `docs/tech-stack.md`.
 
 **Grade:**
+
 - A: All deps approved, no duplicates, minimal transitive count
 - B: All deps approved, minor duplication
 - C: 1-2 unapproved deps or significant duplication
@@ -82,10 +84,12 @@ grep -rn "use crate::" src/ | sort
 ```
 
 Build a module dependency map. For each module, calculate:
+
 - **Fan-out**: How many other modules does it depend on?
 - **Fan-in**: How many other modules depend on it?
 
 **Grade:**
+
 - A: Clear layered architecture, no circular deps, fan-out ≤ 3
 - B: Mostly layered, minor coupling concerns
 - C: Some circular dependencies or high fan-out (4-6)
@@ -114,11 +118,13 @@ wc -l src/**/*.rs 2>/dev/null | sort -rn
 ```
 
 Flag:
+
 - Files exceeding 500 lines
 - Functions exceeding 40 lines (grep for `fn ` and count lines to next `fn ` or `}`)
 - Modules with more than 10 public exports
 
 **Grade:**
+
 - A: All files under 300 lines, all functions under 40
 - B: A few files 300-500, functions under 40
 - C: Files over 500 or functions over 40
@@ -132,6 +138,7 @@ grep -rn "^pub " src/ | grep -v "pub(crate)" | grep -v "#\[cfg(test)\]"
 ```
 
 Flag items that are `pub` but could be `pub(crate)`. Score:
+
 - A: Minimal public API, everything else is `pub(crate)`
 - B: A few unnecessary `pub` items
 - C: Significant API surface leakage
@@ -139,13 +146,13 @@ Flag items that are `pub` but could be `pub(crate)`. Score:
 
 ## Step 6: Health Score
 
-| Category | Weight | Grade |
-|----------|--------|-------|
-| Module structure | 25% | |
-| Dependencies | 20% | |
-| Internal coupling | 20% | |
-| Code size | 20% | |
-| API surface | 15% | |
+| Category          | Weight | Grade |
+| ----------------- | ------ | ----- |
+| Module structure  | 25%    |       |
+| Dependencies      | 20%    |       |
+| Internal coupling | 20%    |       |
+| Code size         | 20%    |       |
+| API surface       | 15%    |       |
 
 Convert: A=100, B=80, C=60, D=40, F=20. Weighted average = Health Score.
 
@@ -194,3 +201,5 @@ Convert: A=100, B=80, C=60, D=40, F=20. Weighted average = Health Score.
 4. **Produce the dependency map.** ASCII art is mandatory.
 5. **Recommendations are specific.** "Split X into Y" not "consider refactoring."
 6. **Cross-reference ROADMAP.md.** Note if structural issues block upcoming phases.
+
+When finished, do not end the session, continue on to the next skill controlled by /go skill.

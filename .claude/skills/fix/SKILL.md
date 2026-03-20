@@ -50,6 +50,7 @@ grep -rn "<keyword from bug description>" src/
 Read the relevant source files. Trace the code path that triggers the bug.
 
 Write a brief diagnosis:
+
 ```
 BUG: <one-line description>
 EXPECTED: <what should happen>
@@ -81,6 +82,7 @@ fn regression_description_of_bug() {
 ```
 
 Run the test to confirm it fails:
+
 ```bash
 cargo test <test_name> 2>&1
 ```
@@ -96,6 +98,7 @@ Make the **smallest change** that fixes the bug. Don't refactor, don't clean up,
 don't improve adjacent code. Fix the bug and nothing else.
 
 Follow `docs/coding-standard.md`:
+
 - No `unwrap()` in non-test code
 - Proper error handling
 - Functions under 40 lines
@@ -105,6 +108,7 @@ Follow `docs/coding-standard.md`:
 ## Step 4: Verify — Green
 
 Run the regression test:
+
 ```bash
 cargo test <test_name> 2>&1
 ```
@@ -150,3 +154,5 @@ When the fix passes the quality gate and is committed, the skill is done. Do NOT
 4. **Full suite must pass.** The fix must not break anything else.
 5. **Commit message explains root cause.** Future developers need to understand WHY.
 6. **One bug, one commit.** Don't bundle fixes.
+
+When finished, do not end the session, continue on to the next skill controlled by /go skill.
