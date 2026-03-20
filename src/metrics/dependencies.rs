@@ -64,6 +64,27 @@ pub(crate) struct ManifestInfo {
     pub(crate) direct_deps: Vec<String>,
 }
 
+/// Summary of all dependency manifests in a project.
+#[derive(Debug, Clone, Default)]
+pub(crate) struct DependencySummary {
+    /// All parsed manifests.
+    pub(crate) manifests: Vec<ManifestInfo>,
+    /// Total direct dependencies across all manifests.
+    pub(crate) total_direct: usize,
+}
+
+/// Scan a directory for manifests and summarize dependency counts.
+pub(crate) fn summarize_dependencies(dir: &Path) -> DependencySummary {
+    let paths = find_manifests(dir);
+    let manifests: Vec<ManifestInfo> = paths.iter().filter_map(|p| parse_manifest(p)).collect();
+    let total_direct = manifests.iter().map(|m| m.direct_deps.len()).sum();
+
+    DependencySummary {
+        manifests,
+        total_direct,
+    }
+}
+
 /// Find manifest files in a directory, skipping excluded directories.
 pub(crate) fn find_manifests(dir: &Path) -> Vec<PathBuf> {
     let mut manifests = Vec::new();
@@ -447,5 +468,25 @@ tempfile = "3"
         assert_eq!(manifests.len(), 2);
         assert!(manifests.iter().any(|p| p.ends_with("Cargo.toml")));
         assert!(manifests.iter().any(|p| p.ends_with("package.json")));
+    }
+
+    #[test]
+    fn summarizes_dependencies() {
+        let dir = TempDir::new().unwrap();
+        fs::write(
+            dir.path().join("Cargo.toml"),
+            "[dependencies]\nserde = \"1\"\nclap = \"4\"\n",
+        )
+        .unwrap();
+        fs::create_dir_all(dir.path().join("frontend")).unwrap();
+        fs::write(
+            dir.path().join("frontend/package.json"),
+            r#"{"dependencies":{"react":"18","next":"14"}}"#,
+        )
+        .unwrap();
+
+        let summary = summarize_dependencies(dir.path());
+        assert_eq!(summary.manifests.len(), 2);
+        assert_eq!(summary.total_direct, 4); // 2 cargo + 2 npm
     }
 }
