@@ -32,6 +32,8 @@ pub(crate) struct DashboardData<'a> {
     pub(crate) history_lines: Vec<usize>,
     /// Historical file counts for sparkline (from all snapshots).
     pub(crate) history_files: Vec<usize>,
+    /// Number of files skipped due to read errors.
+    pub(crate) skipped_files: usize,
 }
 
 /// Render the terminal dashboard to stdout.
@@ -62,6 +64,18 @@ pub(crate) fn render(
     if let Some(ai) = data.ai_result {
         render_ai_analysis(ai, &mut cw)?;
     }
+    if data.skipped_files > 0 {
+        render_skipped_files(data.skipped_files, &mut cw)?;
+    }
+    Ok(())
+}
+
+/// Render a warning line for skipped (unreadable) files.
+fn render_skipped_files(count: usize, cw: &mut ColorWriter) -> io::Result<()> {
+    cw.warn(&format!(
+        "⚠ {count} file{} skipped (unreadable)\n",
+        if count == 1 { "" } else { "s" },
+    ))?;
     Ok(())
 }
 
@@ -415,6 +429,7 @@ mod tests {
             ai_result: None,
             history_lines: vec![],
             history_files: vec![],
+            skipped_files: 0,
         }
     }
 
@@ -455,6 +470,7 @@ mod tests {
             ai_result: None,
             history_lines: vec![],
             history_files: vec![],
+            skipped_files: 0,
         };
         let mut buf = Vec::new();
         render(&data, &mut buf, false).unwrap();
@@ -566,6 +582,7 @@ mod tests {
             ai_result: None,
             history_lines: vec![],
             history_files: vec![],
+            skipped_files: 0,
         };
         let mut buf = Vec::new();
         render(&data, &mut buf, false).unwrap();
@@ -577,5 +594,34 @@ mod tests {
         assert!(output.contains("Doc-to-code:    0.15"));
         assert!(output.contains("README score:   4/5"));
         assert!(output.contains("Dir coverage:   1/2"));
+    }
+
+    #[test]
+    fn renders_skipped_files_warning() {
+        let agg = make_agg();
+        let dep = DependencySummary::default();
+        let mut data = make_data(&agg, &dep);
+        data.skipped_files = 3;
+        let mut buf = Vec::new();
+        render(&data, &mut buf, false).expect("render failed");
+        let output = String::from_utf8(buf).expect("invalid utf8");
+        assert!(
+            output.contains("3 files skipped (unreadable)"),
+            "expected skipped files warning in output",
+        );
+    }
+
+    #[test]
+    fn no_skipped_warning_when_zero() {
+        let agg = make_agg();
+        let dep = DependencySummary::default();
+        let data = make_data(&agg, &dep);
+        let mut buf = Vec::new();
+        render(&data, &mut buf, false).expect("render failed");
+        let output = String::from_utf8(buf).expect("invalid utf8");
+        assert!(
+            !output.contains("skipped"),
+            "should not show skipped warning when count is 0",
+        );
     }
 }

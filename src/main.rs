@@ -55,11 +55,19 @@ fn run_analyze(args: &cli::AnalyzeArgs) {
         }
     };
 
+    let skipped_count = std::sync::atomic::AtomicUsize::new(0);
     let analyzed: Vec<_> = files
         .par_iter()
         .filter(|f| !f.is_minified && !f.is_generated)
         .filter_map(|f| {
-            let content = std::fs::read_to_string(&f.path).ok()?;
+            let content = match std::fs::read_to_string(&f.path) {
+                Ok(c) => c,
+                Err(e) => {
+                    eprintln!("warning: skipped {}: {e}", f.path.display());
+                    skipped_count.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                    return None;
+                }
+            };
             let lines = metrics::loc::count_lines(&content, f.language);
             let functions = f
                 .language
@@ -68,6 +76,7 @@ fn run_analyze(args: &cli::AnalyzeArgs) {
             Some((f, lines, functions))
         })
         .collect();
+    let skipped_files = skipped_count.load(std::sync::atomic::Ordering::Relaxed);
 
     let file_results: Vec<_> = analyzed
         .iter()
@@ -113,6 +122,7 @@ fn run_analyze(args: &cli::AnalyzeArgs) {
         &dep_summary,
         Some(&doc_metrics),
         ai_result.as_ref(),
+        skipped_files,
     );
     if let Err(e) = snapshot::store::write_snapshot(&args.path, &snap) {
         eprintln!("warning: failed to write snapshot: {e}");
@@ -155,6 +165,7 @@ fn run_analyze(args: &cli::AnalyzeArgs) {
             ai_result: ai_result.as_ref(),
             history_lines,
             history_files,
+            skipped_files,
         };
         if let Err(e) = report::dashboard::render(&dashboard_data, &mut stdout, color) {
             eprintln!("error: failed to render dashboard: {e}");

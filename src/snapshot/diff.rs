@@ -66,6 +66,7 @@ mod tests {
             dependencies: None,
             documentation: None,
             ai_analysis: None,
+            skipped_files: 0,
         }
     }
 

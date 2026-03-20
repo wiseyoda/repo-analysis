@@ -4,11 +4,11 @@
 
 ## Current Task
 
-- **Phase:** 7
-- **Task:** ALL PHASES COMPLETE
-- **Status:** idle
+- **Phase:** 9
+- **Task:** Bug fixes: silent file read errors (log + count skipped files)
+- **Status:** in-progress
 - **Blocker:** none
-- **Started:** —
+- **Started:** 2026-03-20
 
 ## Progress
 
@@ -31,14 +31,29 @@
 - [x] All 7 tasks — completed 2026-03-20 (shipped as v0.7.0, PR #6 merged)
 
 ### Phase 7: Polish & Distribution
-- [x] Shell completions (bash, zsh, fish) — completed 2026-03-20
-- [x] CI pipeline — completed 2026-03-20
-- [x] README — completed 2026-03-20
-- [x] cargo install metadata — completed 2026-03-20
-- [x] GitHub Releases workflow — completed 2026-03-20
-- [x] Homebrew formula — completed 2026-03-20
-- [x] Man page generation — completed 2026-03-20
-- [x] Dogfooding — completed 2026-03-20
+- [x] All 8 tasks — completed 2026-03-20 (shipped as v0.8.0, PR #7 merged)
+
+### Phase 9: Developer Health Check
+- [ ] Bug fixes: silent file read errors (log + count skipped files) — in progress
+- [ ] Bug fixes: AnalysisResult builder struct
+- [ ] Bug fixes: corrupt snapshot friendly error + silent index write warning
+- [ ] Bug fixes: warn when 0 files analyzed after filtering
+- [ ] Bug fixes: integration test speed (REPOSTAT_SKIP_AI env var)
+- [ ] Bug fixes: AI module unit tests (skills.rs + schema.rs)
+- [ ] Bug fixes: add --verbose flag with phase timing
+- [ ] Bug fixes: sync Cargo.toml version to 0.9.0
+- [ ] Report module unit tests
+- [ ] Per-file churn collection
+- [ ] Churn + complexity risk score
+- [ ] Risk scores in snapshots
+- [ ] Risk scores in dashboard, JSON, markdown
+- [ ] Parallel AI skills
+- [ ] Health score exit codes
+- [ ] Health thresholds in config
+- [ ] repostat init command
+- [ ] repostat diff HEAD~N
+- [ ] HTML dashboard output
+- [ ] Graceful degradation
 
 ## Learnings
 
@@ -50,6 +65,7 @@
 - 2026-03-20: CLI refactored to subcommands while preserving backward compat (default = analyze).
 - 2026-03-20: Sparkline uses 8-level Unicode block chars, needs min 3 snapshots to display.
 - 2026-03-20: clap_complete and clap_mangen provide shell completions and man pages via subcommands.
+- 2026-03-20: Claude CLI timeout extended from 60s to 180s with process kill on timeout.
 
 ## Session Log
 

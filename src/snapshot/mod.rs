@@ -34,6 +34,9 @@ pub(crate) struct Snapshot {
     /// AI analysis results.
     #[serde(default)]
     pub(crate) ai_analysis: Option<crate::ai::schema::AiAnalysisResult>,
+    /// Number of files skipped due to read errors.
+    #[serde(default)]
+    pub(crate) skipped_files: usize,
 }
 
 /// Dependency data stored in a snapshot.
@@ -118,6 +121,7 @@ pub(crate) struct SnapshotLanguageEntry {
 
 impl Snapshot {
     /// Build a snapshot from aggregate metrics, hotspots, dependency, doc, and AI data.
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn from_aggregate(
         agg: &crate::metrics::aggregate::AggregateMetrics,
         git_sha: Option<String>,
@@ -125,6 +129,7 @@ impl Snapshot {
         dep_summary: &crate::metrics::dependencies::DependencySummary,
         doc_metrics: Option<&crate::metrics::documentation::DocumentationMetrics>,
         ai_result: Option<&crate::ai::schema::AiAnalysisResult>,
+        skipped_files: usize,
     ) -> Self {
         let mut by_language = BTreeMap::new();
         for (lang, metrics) in &agg.by_language {
@@ -207,6 +212,7 @@ impl Snapshot {
             dependencies,
             documentation,
             ai_analysis: ai_result.cloned(),
+            skipped_files,
         }
     }
 }
@@ -279,12 +285,14 @@ mod tests {
             &dep_default,
             None,
             None,
+            2,
         );
         assert_eq!(snap.total_files, 3);
         assert_eq!(snap.total_lines.code, 80);
         assert_eq!(snap.git_sha, Some("abc123".to_string()));
         assert!(snap.by_language.contains_key("Rust"));
         assert_eq!(snap.by_language["Rust"].files, 3);
+        assert_eq!(snap.skipped_files, 2);
     }
 
     #[test]
@@ -318,6 +326,7 @@ mod tests {
             dependencies: None,
             documentation: None,
             ai_analysis: None,
+            skipped_files: 0,
         };
 
         let json = serde_json::to_string_pretty(&snap).unwrap();
