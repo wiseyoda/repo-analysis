@@ -4,7 +4,6 @@ use super::{Snapshot, SnapshotLineMetrics};
 
 /// Delta between two snapshots.
 #[derive(Debug, Clone)]
-#[allow(dead_code)] // fields read by dashboard (upcoming)
 pub(crate) struct SnapshotDiff {
     /// Change in total file count.
     pub(crate) files_delta: i64,
@@ -14,7 +13,6 @@ pub(crate) struct SnapshotDiff {
 
 /// Delta in line metrics.
 #[derive(Debug, Clone)]
-#[allow(dead_code)] // fields read by dashboard (upcoming)
 pub(crate) struct LinesDelta {
     /// Change in total lines.
     pub(crate) total: i64,

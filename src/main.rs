@@ -57,5 +57,11 @@ fn main() {
         eprintln!("warning: failed to write snapshot: {e}");
     }
 
-    let _diff = previous.map(|prev| snapshot::diff::diff(&snap, &prev));
+    let diff = previous.map(|prev| snapshot::diff::diff(&snap, &prev));
+
+    let mut stdout = std::io::stdout().lock();
+    if let Err(e) = report::dashboard::render(&agg, diff.as_ref(), &mut stdout) {
+        eprintln!("error: failed to render dashboard: {e}");
+        process::exit(2);
+    }
 }
