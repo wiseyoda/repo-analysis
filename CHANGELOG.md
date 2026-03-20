@@ -7,6 +7,25 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-03-20
+
+### Added
+- Claude CLI detection (`which claude`) with graceful skip when unavailable
+- Skill file system: 6 analysis prompts loaded from `~/.repostat/skills/`, defaults written on first run
+- Claude CLI invocation via `claude -p --model haiku --output-format json` with 60s timeout
+- Lenient JSON response parsing: direct parse, code block extraction, brace-delimited fallback
+- Architecture summary skill: project description, patterns, design approach
+- Feature inventory skill: feature list with completeness status
+- Code quality review skill: anti-patterns, dead code, inconsistencies with overall score
+- Effort estimation skill: dev-hours for existing code and remaining work
+- Stale documentation detection skill: finds docs referencing removed code
+- Documentation quality scoring skill: per-file clarity/completeness ratings
+- AI Analysis section in terminal dashboard (architecture, features, quality, effort)
+- AI analysis results stored in JSON snapshots for historical comparison
+- Graceful degradation: all other analysis continues normally when Claude CLI is missing
+- Refactored dashboard render to use `DashboardData` struct (clippy compliance)
+- Feature spec: docs/specs/ai-augmented-analysis.md
+
 ## [0.5.0] - 2026-03-20
 
 ### Added

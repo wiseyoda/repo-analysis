@@ -9,6 +9,7 @@ license = "MIT"
 [dependencies]
 anyhow = "1"
 chrono = { version = "0.4", features = ["serde"] }
+dirs = "6"
 clap = { version = "4", features = ["derive"] }
 crossterm = "0.28"
 globset = "0.4"

@@ -2,6 +2,7 @@
 
 use std::io::{self, Write};
 
+use crate::ai::schema::AiAnalysisResult;
 use crate::metrics::aggregate::AggregateMetrics;
 use crate::metrics::complexity::FunctionInfo;
 use crate::metrics::dependencies::DependencySummary;
@@ -13,28 +14,43 @@ use super::color::ColorWriter;
 /// Hotspot entry: file path + function info.
 pub(crate) type Hotspot = (String, FunctionInfo);
 
+/// All data needed to render the dashboard.
+pub(crate) struct DashboardData<'a> {
+    /// Aggregate code metrics.
+    pub(crate) agg: &'a AggregateMetrics,
+    /// Diff from previous snapshot.
+    pub(crate) diff: Option<&'a SnapshotDiff>,
+    /// Complexity hotspots.
+    pub(crate) hotspots: &'a [Hotspot],
+    /// Dependency summary.
+    pub(crate) dep_summary: &'a DependencySummary,
+    /// Documentation metrics.
+    pub(crate) doc_metrics: Option<&'a DocumentationMetrics>,
+    /// AI analysis results.
+    pub(crate) ai_result: Option<&'a AiAnalysisResult>,
+}
+
 /// Render the terminal dashboard to stdout.
 pub(crate) fn render(
-    agg: &AggregateMetrics,
-    diff: Option<&SnapshotDiff>,
-    hotspots: &[Hotspot],
-    dep_summary: &DependencySummary,
-    doc_metrics: Option<&DocumentationMetrics>,
+    data: &DashboardData<'_>,
     writer: &mut dyn Write,
     color: bool,
 ) -> io::Result<()> {
     let mut cw = ColorWriter::new(writer, color);
     render_header(&mut cw)?;
-    render_summary(agg, diff, &mut cw)?;
-    render_language_breakdown(agg, &mut cw)?;
-    if !hotspots.is_empty() {
-        render_hotspots(hotspots, &mut cw)?;
+    render_summary(data.agg, data.diff, &mut cw)?;
+    render_language_breakdown(data.agg, &mut cw)?;
+    if !data.hotspots.is_empty() {
+        render_hotspots(data.hotspots, &mut cw)?;
     }
-    if !dep_summary.manifests.is_empty() {
-        render_dependencies(dep_summary, &mut cw)?;
+    if !data.dep_summary.manifests.is_empty() {
+        render_dependencies(data.dep_summary, &mut cw)?;
     }
-    if let Some(docs) = doc_metrics {
+    if let Some(docs) = data.doc_metrics {
         render_documentation(docs, &mut cw)?;
+    }
+    if let Some(ai) = data.ai_result {
+        render_ai_analysis(ai, &mut cw)?;
     }
     Ok(())
 }
@@ -126,6 +142,69 @@ fn render_documentation(docs: &DocumentationMetrics, cw: &mut ColorWriter) -> io
     cw.dim("└────────────────────────────────────────┘")?;
     cw.newline()?;
     Ok(())
+}
+
+/// Render AI analysis section.
+fn render_ai_analysis(ai: &AiAnalysisResult, cw: &mut ColorWriter) -> io::Result<()> {
+    cw.dim("├────────────────────────────────────────┤")?;
+    cw.newline()?;
+    cw.plain("│ ")?;
+    cw.bold("AI Analysis")?;
+    cw.newline()?;
+    cw.dim("│ ─────────────────────────────────────  │")?;
+    cw.newline()?;
+
+    if let Some(arch) = &ai.architecture {
+        let desc = truncate(&arch.description, 35);
+        cw.plain(&format!("│  Architecture: {desc}\n"))?;
+    }
+
+    if let Some(feat) = &ai.features {
+        let complete = feat
+            .features
+            .iter()
+            .filter(|f| f.status == "complete")
+            .count();
+        let wip = feat.features.iter().filter(|f| f.status == "wip").count();
+        cw.plain(&format!("│  Features: {complete} complete, {wip} WIP\n"))?;
+    }
+
+    if let Some(quality) = &ai.quality {
+        let issues = quality.issues.len();
+        cw.plain(&format!(
+            "│  Quality: {} ({issues} issues)\n",
+            capitalize(&quality.overall_score),
+        ))?;
+    }
+
+    if let Some(effort) = &ai.effort {
+        cw.plain(&format!(
+            "│  Effort: ~{:.0} dev-hours\n",
+            effort.existing_hours,
+        ))?;
+    }
+
+    cw.dim("└────────────────────────────────────────┘")?;
+    cw.newline()?;
+    Ok(())
+}
+
+/// Truncate a string to a max length, appending "..." if truncated.
+fn truncate(s: &str, max: usize) -> String {
+    if s.len() <= max {
+        s.to_string()
+    } else {
+        format!("{}...", &s[..max.saturating_sub(3)])
+    }
+}
+
+/// Capitalize the first letter of a string.
+fn capitalize(s: &str) -> String {
+    let mut chars = s.chars();
+    match chars.next() {
+        None => String::new(),
+        Some(c) => c.to_uppercase().to_string() + chars.as_str(),
+    }
 }
 
 /// Render complexity hotspots section.
@@ -308,20 +387,24 @@ mod tests {
         }
     }
 
+    fn make_data<'a>(agg: &'a AggregateMetrics, dep: &'a DependencySummary) -> DashboardData<'a> {
+        DashboardData {
+            agg,
+            diff: None,
+            hotspots: &[],
+            dep_summary: dep,
+            doc_metrics: None,
+            ai_result: None,
+        }
+    }
+
     #[test]
     fn renders_without_diff() {
         let agg = make_agg();
+        let dep = DependencySummary::default();
+        let data = make_data(&agg, &dep);
         let mut buf = Vec::new();
-        render(
-            &agg,
-            None,
-            &[],
-            &DependencySummary::default(),
-            None,
-            &mut buf,
-            false,
-        )
-        .unwrap();
+        render(&data, &mut buf, false).unwrap();
         let output = String::from_utf8(buf).unwrap();
 
         assert!(output.contains("repostat"));
@@ -342,17 +425,17 @@ mod tests {
                 comment: 10,
             },
         };
+        let dep = DependencySummary::default();
+        let data = DashboardData {
+            agg: &agg,
+            diff: Some(&diff),
+            hotspots: &[],
+            dep_summary: &dep,
+            doc_metrics: None,
+            ai_result: None,
+        };
         let mut buf = Vec::new();
-        render(
-            &agg,
-            Some(&diff),
-            &[],
-            &DependencySummary::default(),
-            None,
-            &mut buf,
-            false,
-        )
-        .unwrap();
+        render(&data, &mut buf, false).unwrap();
         let output = String::from_utf8(buf).unwrap();
 
         assert!(output.contains("(+2)"));
@@ -362,17 +445,10 @@ mod tests {
     #[test]
     fn languages_sorted_by_code_lines_descending() {
         let agg = make_agg();
+        let dep = DependencySummary::default();
+        let data = make_data(&agg, &dep);
         let mut buf = Vec::new();
-        render(
-            &agg,
-            None,
-            &[],
-            &DependencySummary::default(),
-            None,
-            &mut buf,
-            false,
-        )
-        .unwrap();
+        render(&data, &mut buf, false).unwrap();
         let output = String::from_utf8(buf).unwrap();
 
         let rust_pos = output.find("Rust").unwrap();
@@ -383,17 +459,10 @@ mod tests {
     #[test]
     fn color_mode_adds_ansi_codes() {
         let agg = make_agg();
+        let dep = DependencySummary::default();
+        let data = make_data(&agg, &dep);
         let mut buf = Vec::new();
-        render(
-            &agg,
-            None,
-            &[],
-            &DependencySummary::default(),
-            None,
-            &mut buf,
-            true,
-        )
-        .unwrap();
+        render(&data, &mut buf, true).unwrap();
         let output = String::from_utf8(buf).unwrap();
         assert!(output.contains("\x1b["), "should contain ANSI codes");
     }
@@ -401,17 +470,10 @@ mod tests {
     #[test]
     fn no_color_mode_has_no_ansi() {
         let agg = make_agg();
+        let dep = DependencySummary::default();
+        let data = make_data(&agg, &dep);
         let mut buf = Vec::new();
-        render(
-            &agg,
-            None,
-            &[],
-            &DependencySummary::default(),
-            None,
-            &mut buf,
-            false,
-        )
-        .unwrap();
+        render(&data, &mut buf, false).unwrap();
         let output = String::from_utf8(buf).unwrap();
         assert!(!output.contains("\x1b["), "should not contain ANSI codes");
     }
@@ -472,17 +534,17 @@ mod tests {
                 coverage: 0.5,
             },
         };
+        let dep = DependencySummary::default();
+        let data = DashboardData {
+            agg: &agg,
+            diff: None,
+            hotspots: &[],
+            dep_summary: &dep,
+            doc_metrics: Some(&docs),
+            ai_result: None,
+        };
         let mut buf = Vec::new();
-        render(
-            &agg,
-            None,
-            &[],
-            &DependencySummary::default(),
-            Some(&docs),
-            &mut buf,
-            false,
-        )
-        .unwrap();
+        render(&data, &mut buf, false).unwrap();
         let output = String::from_utf8(buf).unwrap();
 
         assert!(output.contains("Documentation"));
