@@ -5,7 +5,7 @@
 ## Current Task
 
 - **Phase:** 1
-- **Task:** File scanner: recursive walk with gitignore + heuristic + config exclusions
+- **Task:** Language detection from file extensions (50+ languages)
 - **Status:** idle
 - **Blocker:** none
 - **Started:** —
@@ -16,7 +16,7 @@
 - [x] Project scaffold: `Cargo.toml`, module structure, CI config — completed 2026-03-19
 - [x] CLI argument parsing with `clap` (path argument, `--help`, `--version`) — completed 2026-03-19
 - [x] `.repostat.toml` config file loading and validation — completed 2026-03-19
-- [ ] File scanner: recursive walk with gitignore + heuristic + config exclusions
+- [x] File scanner: recursive walk with gitignore + heuristic + config exclusions — completed 2026-03-19
 - [ ] Language detection from file extensions (50+ languages)
 - [ ] Line counting engine: code, comments, blanks — per file, per language
 - [ ] Generated/minified file detection and exclusion
@@ -37,7 +37,9 @@
 > Things discovered during implementation that future sessions need to know.
 
 - 2026-03-19: Rust 1.93.1 on this machine; edition 2024 compiles without issues.
-- 2026-03-19: Clippy treats pub(crate) fields as dead_code if not read in non-test code. Use #[allow(dead_code)] with TODO comment for fields that will be consumed by the next task.
+- 2026-03-19: Clippy treats pub(crate) fields as dead_code if not read in non-test code. Wire new modules into main.rs immediately to avoid this.
+- 2026-03-19: The `ignore` crate needs a git init in the test dir for .gitignore to be respected. Use `git init` in test fixtures.
+- 2026-03-19: Added `globset` crate for config pattern matching (Layer 3 of ADR-005). Already in the ignore ecosystem, minimal extra deps.
 
 ## Session Log
 
@@ -47,3 +49,4 @@
 | 2026-03-19 | Project scaffold | Cargo.toml, 9 source files, CI config, 3 integration tests. Quality gate passes. |
 | 2026-03-19 | CLI argument parsing | Path validation, error handling, spec + 4 new integration tests. |
 | 2026-03-19 | Config loading | .repostat.toml parsing with exclude/include patterns, 7 unit tests. |
+| 2026-03-19 | File scanner | 3-layer exclusion (gitignore, heuristics, config), globset, 8 unit tests. |

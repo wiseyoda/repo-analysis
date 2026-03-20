@@ -8,8 +8,6 @@ use serde::Deserialize;
 const CONFIG_FILE_NAME: &str = ".repostat.toml";
 
 /// Project-level configuration loaded from `.repostat.toml`.
-// TODO: remove allow once scanner reads these fields
-#[allow(dead_code)]
 #[derive(Debug, Default)]
 pub(crate) struct Config {
     /// Glob patterns for files/directories to exclude from analysis.

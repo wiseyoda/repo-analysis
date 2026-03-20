@@ -19,8 +19,16 @@ fn main() {
         }
     };
 
-    let _config = match config::Config::load(&path) {
+    let config = match config::Config::load(&path) {
         Ok(c) => c,
+        Err(e) => {
+            eprintln!("error: {e}");
+            process::exit(1);
+        }
+    };
+
+    let _files = match scanner::scan(&path, &config) {
+        Ok(f) => f,
         Err(e) => {
             eprintln!("error: {e}");
             process::exit(1);

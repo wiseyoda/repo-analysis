@@ -688,6 +688,7 @@ dependencies = [
  "chrono",
  "clap",
  "crossterm",
+ "globset",
  "ignore",
  "predicates",
  "pretty_assertions",
