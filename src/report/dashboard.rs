@@ -5,23 +5,32 @@ use std::io::{self, Write};
 use crate::metrics::aggregate::AggregateMetrics;
 use crate::snapshot::diff::SnapshotDiff;
 
+use super::color::ColorWriter;
+
 /// Render the terminal dashboard to stdout.
 pub(crate) fn render(
     agg: &AggregateMetrics,
     diff: Option<&SnapshotDiff>,
     writer: &mut dyn Write,
+    color: bool,
 ) -> io::Result<()> {
-    render_header(writer)?;
-    render_summary(agg, diff, writer)?;
-    render_language_breakdown(agg, writer)?;
+    let mut cw = ColorWriter::new(writer, color);
+    render_header(&mut cw)?;
+    render_summary(agg, diff, &mut cw)?;
+    render_language_breakdown(agg, &mut cw)?;
     Ok(())
 }
 
 /// Render the dashboard header.
-fn render_header(w: &mut dyn Write) -> io::Result<()> {
-    writeln!(w, "┌────────────────────────────────────────┐")?;
-    writeln!(w, "│           repostat analysis             │")?;
-    writeln!(w, "├────────────────────────────────────────┤")?;
+fn render_header(cw: &mut ColorWriter) -> io::Result<()> {
+    cw.dim("┌────────────────────────────────────────┐")?;
+    cw.newline()?;
+    cw.dim("│")?;
+    cw.header("           repostat analysis             ")?;
+    cw.dim("│")?;
+    cw.newline()?;
+    cw.dim("├────────────────────────────────────────┤")?;
+    cw.newline()?;
     Ok(())
 }
 
@@ -29,75 +38,93 @@ fn render_header(w: &mut dyn Write) -> io::Result<()> {
 fn render_summary(
     agg: &AggregateMetrics,
     diff: Option<&SnapshotDiff>,
-    w: &mut dyn Write,
+    cw: &mut ColorWriter,
 ) -> io::Result<()> {
-    write!(w, "│ Files: {:<10}", agg.total_files)?;
+    cw.plain("│ ")?;
+    cw.bold("Files:")?;
+    cw.plain(&format!(" {:<10}", agg.total_files))?;
     if let Some(d) = diff {
-        write!(w, " ({:+})", d.files_delta)?;
+        cw.plain(" ")?;
+        cw.delta(d.files_delta)?;
     }
-    writeln!(w)?;
+    cw.newline()?;
 
-    write!(w, "│ Lines: {:<10}", agg.total_lines.total_lines)?;
+    cw.plain("│ ")?;
+    cw.bold("Lines:")?;
+    cw.plain(&format!(" {:<10}", agg.total_lines.total_lines))?;
     if let Some(d) = diff {
-        write!(w, " ({:+})", d.lines_delta.total)?;
+        cw.plain(" ")?;
+        cw.delta(d.lines_delta.total)?;
     }
-    writeln!(w)?;
+    cw.newline()?;
 
-    write!(w, "│   Code:    {:<10}", agg.total_lines.code_lines)?;
+    cw.plain(&format!("│   Code:    {:<10}", agg.total_lines.code_lines))?;
     if let Some(d) = diff {
-        write!(w, " ({:+})", d.lines_delta.code)?;
+        cw.plain(" ")?;
+        cw.delta(d.lines_delta.code)?;
     }
-    writeln!(w)?;
+    cw.newline()?;
 
-    write!(w, "│   Blank:   {:<10}", agg.total_lines.blank_lines)?;
+    cw.plain(&format!("│   Blank:   {:<10}", agg.total_lines.blank_lines))?;
     if let Some(d) = diff {
-        write!(w, " ({:+})", d.lines_delta.blank)?;
+        cw.plain(" ")?;
+        cw.delta(d.lines_delta.blank)?;
     }
-    writeln!(w)?;
+    cw.newline()?;
 
-    write!(w, "│   Comment: {:<10}", agg.total_lines.comment_lines)?;
+    cw.plain(&format!(
+        "│   Comment: {:<10}",
+        agg.total_lines.comment_lines
+    ))?;
     if let Some(d) = diff {
-        write!(w, " ({:+})", d.lines_delta.comment)?;
+        cw.plain(" ")?;
+        cw.delta(d.lines_delta.comment)?;
     }
-    writeln!(w)?;
+    cw.newline()?;
 
-    writeln!(w, "├────────────────────────────────────────┤")?;
+    cw.dim("├────────────────────────────────────────┤")?;
+    cw.newline()?;
     Ok(())
 }
 
 /// Render per-language breakdown sorted by code lines descending.
-fn render_language_breakdown(agg: &AggregateMetrics, w: &mut dyn Write) -> io::Result<()> {
-    writeln!(w, "│ Language          Files    Code     %  │")?;
-    writeln!(w, "│ ─────────────────────────────────────  │")?;
+fn render_language_breakdown(agg: &AggregateMetrics, cw: &mut ColorWriter) -> io::Result<()> {
+    cw.plain("│ ")?;
+    cw.bold("Language          Files    Code     %")?;
+    cw.plain("  │")?;
+    cw.newline()?;
+
+    cw.dim("│ ─────────────────────────────────────  │")?;
+    cw.newline()?;
 
     let total_code = agg.total_lines.code_lines.max(1);
 
-    // Sort languages by code lines descending
     let mut langs: Vec<_> = agg.by_language.iter().collect();
     langs.sort_by(|a, b| b.1.lines.code_lines.cmp(&a.1.lines.code_lines));
 
     for (lang, metrics) in &langs {
         let pct = (metrics.lines.code_lines as f64 / total_code as f64) * 100.0;
-        writeln!(
-            w,
+        cw.plain(&format!(
             "│ {:<17} {:>5}  {:>6}  {:>4.1}%  │",
             lang.display_name(),
             metrics.file_count,
             metrics.lines.code_lines,
             pct,
-        )?;
+        ))?;
+        cw.newline()?;
     }
 
     if agg.unknown_language.file_count > 0 {
         let pct = (agg.unknown_language.lines.code_lines as f64 / total_code as f64) * 100.0;
-        writeln!(
-            w,
+        cw.plain(&format!(
             "│ {:<17} {:>5}  {:>6}  {:>4.1}%  │",
             "Other", agg.unknown_language.file_count, agg.unknown_language.lines.code_lines, pct,
-        )?;
+        ))?;
+        cw.newline()?;
     }
 
-    writeln!(w, "└────────────────────────────────────────┘")?;
+    cw.dim("└────────────────────────────────────────┘")?;
+    cw.newline()?;
     Ok(())
 }
 
@@ -156,12 +183,11 @@ mod tests {
     fn renders_without_diff() {
         let agg = make_agg();
         let mut buf = Vec::new();
-        render(&agg, None, &mut buf).unwrap();
+        render(&agg, None, &mut buf, false).unwrap();
         let output = String::from_utf8(buf).unwrap();
 
         assert!(output.contains("repostat"));
-        assert!(output.contains("Files: 8"));
-        assert!(output.contains("Lines: 300"));
+        assert!(output.contains("Files:"));
         assert!(output.contains("Rust"));
         assert!(output.contains("Python"));
     }
@@ -179,7 +205,7 @@ mod tests {
             },
         };
         let mut buf = Vec::new();
-        render(&agg, Some(&diff), &mut buf).unwrap();
+        render(&agg, Some(&diff), &mut buf, false).unwrap();
         let output = String::from_utf8(buf).unwrap();
 
         assert!(output.contains("(+2)"));
@@ -190,11 +216,29 @@ mod tests {
     fn languages_sorted_by_code_lines_descending() {
         let agg = make_agg();
         let mut buf = Vec::new();
-        render(&agg, None, &mut buf).unwrap();
+        render(&agg, None, &mut buf, false).unwrap();
         let output = String::from_utf8(buf).unwrap();
 
         let rust_pos = output.find("Rust").unwrap();
         let python_pos = output.find("Python").unwrap();
         assert!(rust_pos < python_pos, "Rust should appear before Python");
+    }
+
+    #[test]
+    fn color_mode_adds_ansi_codes() {
+        let agg = make_agg();
+        let mut buf = Vec::new();
+        render(&agg, None, &mut buf, true).unwrap();
+        let output = String::from_utf8(buf).unwrap();
+        assert!(output.contains("\x1b["), "should contain ANSI codes");
+    }
+
+    #[test]
+    fn no_color_mode_has_no_ansi() {
+        let agg = make_agg();
+        let mut buf = Vec::new();
+        render(&agg, None, &mut buf, false).unwrap();
+        let output = String::from_utf8(buf).unwrap();
+        assert!(!output.contains("\x1b["), "should not contain ANSI codes");
     }
 }

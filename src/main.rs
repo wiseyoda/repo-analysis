@@ -76,8 +76,9 @@ fn main() {
             process::exit(2);
         }
     } else {
+        let color = report::color::is_color_enabled();
         let mut stdout = std::io::stdout().lock();
-        if let Err(e) = report::dashboard::render(&agg, diff.as_ref(), &mut stdout) {
+        if let Err(e) = report::dashboard::render(&agg, diff.as_ref(), &mut stdout, color) {
             eprintln!("error: failed to render dashboard: {e}");
             process::exit(2);
         }
