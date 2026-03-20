@@ -2,6 +2,7 @@
 
 use std::path::Path;
 use std::process;
+use std::time::Instant;
 
 use rayon::prelude::*;
 
@@ -39,6 +40,8 @@ fn main() {
 
 /// Run the default analyze command.
 fn run_analyze(args: &cli::AnalyzeArgs) {
+    let total_start = Instant::now();
+
     let config = match config::Config::load(&args.path) {
         Ok(c) => c,
         Err(e) => {
@@ -47,6 +50,7 @@ fn run_analyze(args: &cli::AnalyzeArgs) {
         }
     };
 
+    let t = Instant::now();
     let files = match scanner::scan(&args.path, &config) {
         Ok(f) => f,
         Err(e) => {
@@ -54,7 +58,9 @@ fn run_analyze(args: &cli::AnalyzeArgs) {
             process::exit(1);
         }
     };
+    let scanner_dur = t.elapsed();
 
+    let t = Instant::now();
     let skipped_count = std::sync::atomic::AtomicUsize::new(0);
     let analyzed: Vec<_> = files
         .par_iter()
@@ -77,6 +83,7 @@ fn run_analyze(args: &cli::AnalyzeArgs) {
         })
         .collect();
     let skipped_files = skipped_count.load(std::sync::atomic::Ordering::Relaxed);
+    let metrics_dur = t.elapsed();
 
     if analyzed.is_empty() {
         eprintln!(
@@ -113,12 +120,18 @@ fn run_analyze(args: &cli::AnalyzeArgs) {
     all_functions.sort_by(|a, b| b.1.cyclomatic.cmp(&a.1.cyclomatic));
     let hotspots: Vec<_> = all_functions.into_iter().take(10).collect();
 
+    let t = Instant::now();
     let dep_summary = metrics::dependencies::summarize_dependencies(&args.path);
+    let deps_dur = t.elapsed();
 
+    let t = Instant::now();
     let doc_metrics =
         metrics::documentation::analyze_documentation(&args.path, agg.total_lines.code_lines);
+    let docs_dur = t.elapsed();
 
+    let t = Instant::now();
     let ai_result = ai::run_ai_analysis(&args.path);
+    let ai_dur = t.elapsed();
 
     let analysis = snapshot::AnalysisResult {
         agg,
@@ -130,6 +143,7 @@ fn run_analyze(args: &cli::AnalyzeArgs) {
         skipped_files,
     };
 
+    let t = Instant::now();
     let previous = snapshot::store::load_latest(&args.path).ok().flatten();
 
     let snap = snapshot::Snapshot::from_analysis(&analysis);
@@ -139,9 +153,11 @@ fn run_analyze(args: &cli::AnalyzeArgs) {
 
     // Register in cross-repo index
     snapshot::index::register_repo(&args.path);
+    let snapshot_dur = t.elapsed();
 
     let diff = previous.map(|prev| snapshot::diff::diff(&snap, &prev));
 
+    let t = Instant::now();
     if args.json {
         match serde_json::to_string_pretty(&snap) {
             Ok(json) => println!("{json}"),
@@ -180,6 +196,19 @@ fn run_analyze(args: &cli::AnalyzeArgs) {
             eprintln!("error: failed to render dashboard: {e}");
             process::exit(2);
         }
+    }
+    let report_dur = t.elapsed();
+
+    if args.verbose {
+        let total_dur = total_start.elapsed();
+        eprintln!("  scanner:      {:.1}s", scanner_dur.as_secs_f64());
+        eprintln!("  metrics:      {:.1}s", metrics_dur.as_secs_f64());
+        eprintln!("  dependencies: {:.1}s", deps_dur.as_secs_f64());
+        eprintln!("  docs:         {:.1}s", docs_dur.as_secs_f64());
+        eprintln!("  AI:           {:.1}s", ai_dur.as_secs_f64());
+        eprintln!("  snapshot:     {:.1}s", snapshot_dur.as_secs_f64());
+        eprintln!("  report:       {:.1}s", report_dur.as_secs_f64());
+        eprintln!("  total:        {:.1}s", total_dur.as_secs_f64());
     }
 }
 

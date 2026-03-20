@@ -25,6 +25,10 @@ pub(crate) struct Args {
     /// Generate a Markdown report file.
     #[arg(long, short)]
     pub(crate) markdown: bool,
+
+    /// Show per-phase timing on stderr.
+    #[arg(long, short)]
+    pub(crate) verbose: bool,
 }
 
 /// Available subcommands.
@@ -68,6 +72,8 @@ pub(crate) struct AnalyzeArgs {
     pub(crate) json: bool,
     /// Whether to output Markdown.
     pub(crate) markdown: bool,
+    /// Whether to show per-phase timing.
+    pub(crate) verbose: bool,
 }
 
 /// Arguments for the trend subcommand.
@@ -94,6 +100,7 @@ pub(crate) fn parse_and_validate() -> anyhow::Result<ValidatedCommand> {
                 path,
                 json: args.json,
                 markdown: args.markdown,
+                verbose: args.verbose,
             }))
         }
     }

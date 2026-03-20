@@ -70,3 +70,23 @@ fn warns_on_empty_directory() {
             "no source files found after filtering",
         ));
 }
+
+#[test]
+fn verbose_shows_timing() {
+    let dir = TempDir::new().unwrap();
+    repostat()
+        .args(["--verbose", dir.path().to_str().unwrap()])
+        .assert()
+        .success()
+        .stderr(predicate::str::contains("scanner:").and(predicate::str::contains("total:")));
+}
+
+#[test]
+fn no_timing_without_verbose() {
+    let dir = TempDir::new().unwrap();
+    repostat()
+        .arg(dir.path())
+        .assert()
+        .success()
+        .stderr(predicate::str::contains("scanner:").not());
+}
