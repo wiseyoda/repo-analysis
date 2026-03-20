@@ -21,11 +21,13 @@ allowed-tools:
 ## Critical Behavior: NEVER STOP BETWEEN TASKS
 
 **When a delegated skill (like /add-feature) completes, DO NOT:**
+
 - Print a summary to the user
 - Wait for user input
 - Output any text explaining what happened
 
 **Instead, IMMEDIATELY:**
+
 1. Record the result (ROADMAP checkbox, state.md, commit)
 2. Loop back to pick the next task
 3. Only stop when the phase is complete or a blocker is hit
@@ -44,18 +46,18 @@ to pick the next task — until the phase is complete or a blocker is hit.
 
 It does NOT implement features itself — it delegates to specialists:
 
-| Situation | Delegates to |
-|-----------|-------------|
-| Need a feature implemented | **`/add-feature <description>`** |
-| Need a feature designed first | **`/spec <feature>`** |
-| Need a new module created | **`/add-module <name>`** |
-| Need to verify code quality | **`/check`** or **`/test`** |
-| Need pre-commit review | **`/review`** |
-| Need to clean up code | **`/refactor <target>`** |
-| Need structural health check | **`/analyze-arch`** |
-| Something is broken | **`/fix <description>`** |
-| Phase is complete, time to PR | **`/pr`** |
-| Scaffolding (Cargo.toml, CI) | Direct execution (no skill needed) |
+| Situation                     | Delegates to                       |
+| ----------------------------- | ---------------------------------- |
+| Need a feature implemented    | **`/add-feature <description>`**   |
+| Need a feature designed first | **`/spec <feature>`**              |
+| Need a new module created     | **`/add-module <name>`**           |
+| Need to verify code quality   | **`/check`** or **`/test`**        |
+| Need pre-commit review        | **`/review`**                      |
+| Need to clean up code         | **`/refactor <target>`**           |
+| Need structural health check  | **`/analyze-arch`**                |
+| Something is broken           | **`/fix <description>`**           |
+| Phase is complete, time to PR | **`/pr`**                          |
+| Scaffolding (Cargo.toml, CI)  | Direct execution (no skill needed) |
 
 ---
 
@@ -112,6 +114,7 @@ Read `ROADMAP.md` to find the active phase (first phase with unchecked `- [ ]` i
 **If NO_STATE:** Create `.repostat/state.md` using the State File Format below.
 
 **If state exists:** Read it. The `## Current Task` section tells you what to resume.
+
 - `status: in-progress` → resume that exact task
 - `status: blocked` → read the blocker, try to unblock or skip
 - `status: idle` → pick the next unchecked ROADMAP item
@@ -134,7 +137,7 @@ git branch --show-current
 
 ---
 
-## LOOP START — Repeat for each task until phase complete
+## LOOP START — Repeat for each task until phase complete - not not let Skills stop your session. Create a task list for each of the tasks in this phase and complete the below steps for each of them.
 
 ### Step 2: Plan — What's Next?
 
@@ -142,11 +145,11 @@ Find the next task: the first unchecked `- [ ]` item in the active ROADMAP phase
 
 Classify it to pick the right skill:
 
-| Task pattern | Skill |
-|-------------|-------|
+| Task pattern                   | Skill                  |
+| ------------------------------ | ---------------------- |
 | "scaffold", "module structure" | Direct + `/add-module` |
-| Any feature or enhancement | `/add-feature` |
-| "CI pipeline" | Direct execution |
+| Any feature or enhancement     | `/add-feature`         |
+| "CI pipeline"                  | Direct execution       |
 
 Compose the task description from ROADMAP.md + matching requirements in `docs/requirements.md`.
 
@@ -172,6 +175,7 @@ If it fails, fix the issue directly (don't delegate to /fix for simple clippy/fm
 If it fails twice consecutively, mark as blocked and STOP.
 
 **Periodic maintenance** (counted across the entire session):
+
 - Every 3rd completed task: also run `/review`
 - Every 5th completed task: also run `/refactor` and `/analyze-arch`
 
@@ -184,6 +188,7 @@ Do all of these without printing anything to the user:
 **5a.** Mark ROADMAP.md checkbox: `- [ ]` → `- [x]`
 **5b.** Update `.repostat/state.md` — completed task, next task, learnings
 **5c.** Commit with Conventional Commit message ending with:
+
 ```
 Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
 ```
@@ -193,10 +198,12 @@ Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
 ### Step 6: Loop Decision
 
 **IMMEDIATELY loop back to Step 2 if:**
+
 - More unchecked tasks remain in the current phase
 - No blockers
 
 **STOP only if:**
+
 - Phase complete → go to Phase Completion below
 - Blocker hit → record in state.md, print summary, ask user
 - 2+ consecutive failures → record, print summary, ask user
@@ -265,6 +272,7 @@ Print this ONLY when stopping (phase complete, blocker, or error):
 ## Progress
 
 ### Phase 1: Foundation & Core Metrics
+
 - [x] Task 1 — completed YYYY-MM-DD
 - [ ] Task 2 — next
 
@@ -274,9 +282,9 @@ Print this ONLY when stopping (phase complete, blocker, or error):
 
 ## Session Log
 
-| Date | Tasks Completed | Notes |
-|------|----------------|-------|
-| YYYY-MM-DD | Task 1, Task 2 | Brief note |
+| Date       | Tasks Completed | Notes      |
+| ---------- | --------------- | ---------- |
+| YYYY-MM-DD | Task 1, Task 2  | Brief note |
 ```
 
 ---

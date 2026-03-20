@@ -93,6 +93,7 @@ For each finding, classify as:
 ## Step 3: Auto-Fix All AUTO-FIX Items
 
 Apply each fix directly. For each, output one line:
+
 ```
 [AUTO-FIXED] file:line — Problem → what you did
 ```
@@ -123,19 +124,20 @@ Apply fixes for items where the user chose "Fix."
 
 Score each category (0-100), then compute weighted average:
 
-| Category | Weight | Score Method |
-|----------|--------|-------------|
-| Constitution compliance | 30% | -25 per CRITICAL finding |
-| Coding standard | 25% | -15 per violation |
-| Test coverage | 20% | -20 per untested new function |
-| Documentation | 15% | -10 per undocumented pub item |
-| Architecture fit | 10% | -15 per structural violation |
+| Category                | Weight | Score Method                  |
+| ----------------------- | ------ | ----------------------------- |
+| Constitution compliance | 30%    | -25 per CRITICAL finding      |
+| Coding standard         | 25%    | -15 per violation             |
+| Test coverage           | 20%    | -20 per untested new function |
+| Documentation           | 15%    | -10 per undocumented pub item |
+| Architecture fit        | 10%    | -15 per structural violation  |
 
 ## Step 7: Completion
 
 Output findings inline as you discover them. Do NOT print a summary box at the end.
 
 Verdicts:
+
 - **APPROVED** (90+): Ready to commit.
 - **APPROVED WITH NOTES** (70-89): Commit OK, but address skipped items soon.
 - **CHANGES REQUESTED** (<70): Fix critical issues before committing.
@@ -149,3 +151,5 @@ Verdicts:
 5. **Constitution violations are always CRITICAL.** No exceptions.
 6. **Cross-reference ROADMAP.md.** Flag changes that don't align with the active phase.
 7. **Never modify `docs/constitution.md`.** It is immutable. If you see an edit to it in the diff, flag as CRITICAL.
+
+When finished, do not end the session, continue on to the next skill controlled by /go skill.

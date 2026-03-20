@@ -51,6 +51,7 @@ Read `docs/requirements.md` to find relevant requirement IDs.
 Determine if this needs a directory module or single-file module:
 
 **Directory module** (if it will have multiple files or submodules):
+
 ```
 src/<parent>/<name>/
 ├── mod.rs        # Re-exports only
@@ -58,6 +59,7 @@ src/<parent>/<name>/
 ```
 
 **Single-file module** (if it's self-contained):
+
 ```
 src/<parent>/<name>.rs
 ```
@@ -128,3 +130,5 @@ When the module compiles and tests pass, the skill is done. Do NOT print a summa
 4. **Include a test scaffold.** At minimum, a placeholder that confirms compilation.
 5. **Justify dependencies.** Every new crate addition needs a comment citing constitution §8.
 6. **Prefer `pub(crate)` over `pub`.** Only export what consumers need.
+
+When finished, do not end the session, continue on to the next skill controlled by /go skill.

@@ -88,6 +88,7 @@ Read `ROADMAP.md` and count checked vs unchecked items per phase.
 ```
 
 If there are learnings in `.repostat/state.md`, show the 3 most recent:
+
 ```
 | RECENT LEARNINGS                                    |
 | - tree-sitter TS grammar needs "typescript" feature |
@@ -101,3 +102,5 @@ If there are learnings in `.repostat/state.md`, show the 3 most recent:
 3. **Show the next task.** The user should know exactly what `/go` will do next.
 4. **Fast.** This should complete in seconds. Don't run expensive commands.
 5. **Graceful when empty.** If there's no src/ or no Cargo.toml, show what exists.
+
+When finished, do not end the session, continue on to the next skill controlled by /go skill.

@@ -49,6 +49,7 @@ cargo clippy -- -D warnings 2>&1
 ```
 
 If it fails, show the warnings grouped by file. For each warning, show:
+
 - File:line
 - Warning message
 - Suggested fix (from clippy)
@@ -58,12 +59,14 @@ Do NOT auto-fix clippy warnings. Report them for the user to decide.
 ### Step 3: Test Suite
 
 Based on $ARGUMENTS:
+
 - No args: `cargo test 2>&1`
 - `--unit`: `cargo test --lib 2>&1`
 - `--integration`: `cargo test --test '*' 2>&1`
 - Other: `cargo test $ARGUMENTS 2>&1`
 
 If any test fails, for each failure report:
+
 - Test name and location (file:line)
 - Expected vs actual values
 - Relevant source code context (read the test file)
@@ -85,6 +88,7 @@ If any test fails, for each failure report:
 ```
 
 If any step failed:
+
 ```
 | VERDICT: GATE FAILED — fix clippy   |
 ```
@@ -96,3 +100,5 @@ If any step failed:
 3. **Auto-fix formatting.** If `cargo fmt --check` fails, run `cargo fmt` and report what changed.
 4. **Show test count.** Always report total tests run, passed, failed.
 5. **Read failing test source.** When a test fails, read the test file to provide context.
+
+When finished, do not end the session, continue on to the next skill controlled by /go skill.

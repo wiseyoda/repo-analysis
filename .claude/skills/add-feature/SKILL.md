@@ -55,11 +55,17 @@ If no existing spec found, create one at `docs/specs/<feature-slug>.md`:
 **Date:** YYYY-MM-DD
 
 ## Purpose
+
 ## Inputs
+
 ## Outputs
+
 ## Behavior
+
 ## Edge Cases
+
 ## Acceptance Criteria
+
 - [ ] Criterion 1
 ```
 
@@ -94,6 +100,7 @@ Confirm all tests pass (both new and existing).
 ## Step 4: Refactor (TDD — Refactor)
 
 While tests stay green:
+
 - Extract functions if anything exceeds 40 lines
 - Simplify where possible
 
@@ -120,3 +127,5 @@ Do NOT print a summary box. The caller (/go) handles recording and continuation.
 6. **Never skip the quality gate.** fmt + clippy + test must all pass.
 7. **Don't modify constitution.md.** It is immutable.
 8. **No summary box.** Just finish when the quality gate passes.
+
+When finished, do not end the session, continue on to the next skill controlled by /go skill.

@@ -55,6 +55,7 @@ Think through the feature completely before writing. Consider:
 - **Testing strategy:** How will we verify each behavior?
 
 If the design has genuine alternatives with meaningful tradeoffs, use AskUserQuestion:
+
 - Describe the decision point in plain English
 - Present 2-3 options with effort and tradeoffs
 - Recommend one
@@ -78,9 +79,10 @@ Why this feature exists. What problem it solves. One paragraph.
 ## Architecture
 
 Where this fits in the codebase. Which modules are involved.
-
 ```
-  [input] → [module A] → [module B] → [output]
+
+[input] → [module A] → [module B] → [output]
+
 ```
 
 ## Inputs
@@ -151,3 +153,5 @@ When the spec is written and saved, the skill is done. Do NOT print a summary bo
 5. **Edge cases are required.** At minimum: empty input, invalid input, large input.
 6. **Reference requirement IDs.** Every spec maps to R-NNN IDs from requirements.md.
 7. **Ask about real tradeoffs.** If there's a genuine design decision, use AskUserQuestion. Don't ask about things with obvious answers.
+
+When finished, do not end the session, continue on to the next skill controlled by /go skill.

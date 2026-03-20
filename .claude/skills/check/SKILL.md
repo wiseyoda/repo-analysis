@@ -46,3 +46,5 @@ Suggest: "Run `/test` for detailed analysis and fixes."
 1. **Report only.** Do not fix anything. Use `/test` for that.
 2. **Always show test counts.** Even on pass.
 3. **Show first 5 errors.** Not the full output — keep it scannable.
+
+When finished, do not end the session, continue on to the next skill controlled by /go skill.
