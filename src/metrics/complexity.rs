@@ -423,6 +423,33 @@ fn is_decision_point(kind: &str, node: Node, source: &[u8]) -> bool {
     }
 }
 
+/// Regex-based complexity estimate for languages without tree-sitter grammars.
+///
+/// Counts decision-point keywords in the source to approximate cyclomatic complexity.
+/// Returns `FileComplexity` with the total as 1 + keyword count.
+pub(crate) fn regex_complexity_estimate(content: &str) -> FileComplexity {
+    let keywords = [
+        "if ", "if(", "else if ", "elif ", "elsif ", "while ", "while(", "for ", "for(", "case ",
+        "when ", "switch ", "catch ", "except ", "rescue ", "&&", "||", " and ", " or ", "? ",
+        "?:",
+    ];
+
+    let count: usize = content
+        .lines()
+        .filter(|line| {
+            let trimmed = line.trim();
+            !trimmed.is_empty() && !trimmed.starts_with("//") && !trimmed.starts_with('#')
+        })
+        .map(|line| keywords.iter().filter(|kw| line.contains(**kw)).count())
+        .sum();
+
+    FileComplexity {
+        total: 1 + count,
+        function_count: 0,
+        average: 0.0,
+    }
+}
+
 /// Map a Language to its tree-sitter grammar, if available.
 fn grammar_for(language: Language) -> Option<tree_sitter::Language> {
     use Language::*;
@@ -776,5 +803,39 @@ fn world() {
     fn no_flag_for_small_file() {
         let v = flag_large_file("small.rs", 100, 500);
         assert!(v.is_none());
+    }
+
+    // --- Regex fallback tests ---
+
+    #[test]
+    fn regex_simple_code_has_complexity_1() {
+        let code = "print('hello')";
+        let result = regex_complexity_estimate(code);
+        assert_eq!(result.total, 1);
+    }
+
+    #[test]
+    fn regex_counts_if_keywords() {
+        let code = "if x > 0:\n    print('positive')\nif y > 0:\n    print('also positive')\n";
+        let result = regex_complexity_estimate(code);
+        assert_eq!(result.total, 3, "two ifs = complexity 3");
+    }
+
+    #[test]
+    fn regex_counts_logical_operators() {
+        let code = "if x > 0 && y > 0:\n    do_thing()\n";
+        let result = regex_complexity_estimate(code);
+        assert!(
+            result.total >= 3,
+            "if + && = at least 3, got {}",
+            result.total
+        );
+    }
+
+    #[test]
+    fn regex_skips_comments() {
+        let code = "# if this were real\nactual_code()\n";
+        let result = regex_complexity_estimate(code);
+        assert_eq!(result.total, 1, "comment line should be skipped");
     }
 }

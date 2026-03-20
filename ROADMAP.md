@@ -39,7 +39,7 @@ for 50k lines), and the dashboard is readable. Snapshots persist and diffs displ
 - [x] Function extraction: name, line count, complexity per function
 - [x] File size and function size threshold flagging
 - [x] Complexity hotspots section in the dashboard (top N worst)
-- [ ] Regex fallback for unsupported languages
+- [x] Regex fallback for unsupported languages
 - [ ] Complexity data in snapshots for trend tracking
 
 **Exit Criteria**: Complexity scores match manual calculation on test fixtures.
