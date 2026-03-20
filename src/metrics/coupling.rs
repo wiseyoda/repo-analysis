@@ -13,6 +13,54 @@ pub(crate) struct CouplingGraph {
     pub(crate) imports: BTreeMap<PathBuf, BTreeSet<String>>,
 }
 
+/// Fan-in / fan-out metrics for a module.
+#[derive(Debug, Clone, Default)]
+pub(crate) struct ModuleCoupling {
+    /// Number of modules this module depends on (outgoing).
+    pub(crate) fan_out: usize,
+    /// Number of modules that depend on this module (incoming).
+    pub(crate) fan_in: usize,
+}
+
+/// Calculate fan-in and fan-out for each module in the coupling graph.
+pub(crate) fn calculate_fan_metrics(graph: &CouplingGraph) -> BTreeMap<PathBuf, ModuleCoupling> {
+    let mut metrics: BTreeMap<PathBuf, ModuleCoupling> = BTreeMap::new();
+
+    // Fan-out: how many unique modules each file imports
+    for (file, imports) in &graph.imports {
+        metrics.entry(file.clone()).or_default().fan_out = imports.len();
+    }
+
+    // Fan-in: how many files import each module
+    // Match import strings to known files by module name
+    let known_modules: BTreeSet<String> = graph
+        .imports
+        .keys()
+        .filter_map(|p| {
+            p.file_stem()
+                .and_then(|s| s.to_str())
+                .map(|s| s.to_string())
+        })
+        .collect();
+
+    for imports in graph.imports.values() {
+        for import in imports {
+            // Extract the leaf module name from the import path
+            let module_name = import.rsplit(&['/', '.', ':'][..]).next().unwrap_or(import);
+            // Find files whose stem matches this module name
+            for path in graph.imports.keys() {
+                if let Some(stem) = path.file_stem().and_then(|s| s.to_str()) {
+                    if stem == module_name && known_modules.contains(stem) {
+                        metrics.entry(path.clone()).or_default().fan_in += 1;
+                    }
+                }
+            }
+        }
+    }
+
+    metrics
+}
+
 /// Extract import statements from a file's content based on its language.
 pub(crate) fn extract_imports(content: &str, language: Language) -> Vec<String> {
     match language {
@@ -285,5 +333,26 @@ mod tests {
 
         let graph = build_coupling_graph(&files, dir.path());
         assert!(!graph.imports.is_empty());
+    }
+
+    #[test]
+    fn calculates_fan_out() {
+        let mut imports = BTreeMap::new();
+        let mut set = BTreeSet::new();
+        set.insert("config".to_string());
+        set.insert("scanner".to_string());
+        imports.insert(PathBuf::from("main.rs"), set);
+
+        let graph = CouplingGraph { imports };
+        let metrics = calculate_fan_metrics(&graph);
+
+        assert_eq!(metrics[&PathBuf::from("main.rs")].fan_out, 2);
+    }
+
+    #[test]
+    fn empty_graph_has_no_metrics() {
+        let graph = CouplingGraph::default();
+        let metrics = calculate_fan_metrics(&graph);
+        assert!(metrics.is_empty());
     }
 }
