@@ -1,11 +1,10 @@
 ---
 name: go
-version: 2.0.0
+version: 3.0.0
 description: |
   Autonomous project driver. Reads state, picks the next task, delegates to
-  the right skill (/add-module, /add-feature, /review, /check, /refactor,
-  /analyze-arch, /test), updates progress, and continues. Run at any moment
-  — picks up where it left off.
+  the right skill, updates progress, and continues. Uses branch-per-phase
+  strategy. Run at any moment — picks up where it left off.
 user-invocable: true
 allowed-tools:
   - Bash
@@ -27,12 +26,16 @@ manager that delegates to specialists:
 
 | Situation | Delegates to |
 |-----------|-------------|
-| Need a new module created | `/add-module <name>` |
-| Need a feature implemented | `/add-feature <description>` |
-| Need to verify code quality | `/check` or `/test` |
-| Need pre-commit review | `/review` |
-| Need to clean up code | `/refactor <target>` |
-| Need structural health check | `/analyze-arch` |
+| Need to understand where we are | **`/status`** |
+| Need a feature designed first | **`/spec <feature>`** |
+| Need a new module created | **`/add-module <name>`** |
+| Need a feature implemented | **`/add-feature <description>`** |
+| Need to verify code quality | **`/check`** or **`/test`** |
+| Need pre-commit review | **`/review`** |
+| Need to clean up code | **`/refactor <target>`** |
+| Need structural health check | **`/analyze-arch`** |
+| Something is broken | **`/fix <description>`** |
+| Phase is complete, time to PR | **`/ship`** |
 | Scaffolding (Cargo.toml, CI) | Direct execution (no skill needed) |
 
 ---
@@ -59,6 +62,27 @@ Read `ROADMAP.md` to find the active phase (first phase with unchecked `- [ ]` i
 - `status: in-progress` → resume that exact task
 - `status: blocked` → read the blocker, try to unblock or skip
 - `status: idle` → pick the next unchecked ROADMAP item
+
+---
+
+## Step 1b: Branch Management
+
+This project uses **branch-per-phase** strategy:
+
+```bash
+git branch --show-current
+```
+
+**Expected branch:** `phase-N/<slug>` (e.g., `phase-1/foundation`, `phase-2/complexity`)
+
+**If on `main` and starting a new phase:** Create the branch:
+```bash
+git checkout -b phase-N/<slug>
+```
+
+**If on the correct phase branch:** Continue working.
+
+**If on a different phase branch:** Something is wrong. Check state.md, ask the user.
 
 ---
 
@@ -99,11 +123,19 @@ and use `/add-module` for each module that needs creating:
 ### For features / enhancements:
 
 Compose the task description from ROADMAP.md + the matching requirements in `docs/requirements.md`.
-Then invoke:
+
+For complex features (touching 3+ files or with non-obvious design), write the spec first:
+
+**Skill: `/spec <composed description>`**
+
+Then implement it:
 
 **Skill: `/add-feature <composed description>`**
 
-This delegates the full TDD+SDD cycle (spec → failing test → implement → refactor → verify).
+`/add-feature` will find and use the spec that `/spec` created. It handles the full
+TDD+SDD cycle (failing test → implement → refactor → verify).
+
+For simple features (single file, obvious design), skip `/spec` and go straight to `/add-feature`.
 
 ### For infra tasks (CI, completions):
 
@@ -148,6 +180,14 @@ git commit -m "<type>(<scope>): <description>"
 
 ## Step 6: Continue or Stop?
 
+### Handling Failures
+
+If `/check` or `/test` fails after a task:
+1. Read the error output carefully
+2. Invoke **Skill: `/fix <error description>`** to diagnose and fix
+3. Re-run `/check` to verify the fix
+4. If the fix works, continue. If not, mark the task as blocked in state.md.
+
 **Continue if:**
 - More unchecked tasks remain in the current phase
 - No blockers encountered
@@ -165,14 +205,21 @@ When all items in a phase are checked:
 
 1. Run **Skill: `/analyze-arch`** to verify structural health
 2. Run **Skill: `/test`** for full test suite verification
-3. Check exit criteria from ROADMAP.md
-4. Use AskUserQuestion:
-   - "Phase N complete. Exit criteria: [list]. All met."
-   - A) Start Phase N+1
-   - B) Run `/review` for a thorough check first
-   - C) Run `/refactor` to clean up before moving on
+3. Run **Skill: `/refactor`** on any files that grew large during the phase
+4. Check exit criteria from ROADMAP.md
+5. Use AskUserQuestion:
+   - "Phase N complete. Exit criteria: [list]. All met. Ready to ship?"
+   - A) Run `/ship` to open a PR and merge this phase to main
+   - B) Run `/review` first for a thorough check before shipping
+   - C) Keep working — there's more to polish
    - D) Stop here
-   - RECOMMENDATION: Choose B — a review between phases catches accumulated issues.
+   - RECOMMENDATION: Choose A — the quality gate already passed, let's ship it.
+
+6. If shipping: invoke **Skill: `/ship`** to push the phase branch and open a PR.
+7. After merge, create the next phase branch:
+   ```bash
+   git checkout main && git pull && git checkout -b phase-N+1/<slug>
+   ```
 
 ### Periodic Maintenance
 
@@ -259,15 +306,33 @@ If still unclear: AskUserQuestion. Don't guess on architecture.
 
 ---
 
+## Skill Quick Reference
+
+| Skill | When /go uses it |
+|-------|-----------------|
+| `/status` | First thing on session start if state.md is stale |
+| `/spec` | Before complex features (3+ files, non-obvious design) |
+| `/add-module` | When ROADMAP task involves creating a new module |
+| `/add-feature` | For implementing features (the workhorse) |
+| `/check` | After every completed task (quick gate) |
+| `/test` | Full suite at phase completion |
+| `/review` | Every 3rd task, and before shipping |
+| `/refactor` | Every 5th task, and at phase completion |
+| `/analyze-arch` | At phase completion |
+| `/fix` | When tests fail unexpectedly |
+| `/ship` | When a phase is complete and ready to merge |
+
 ## Important Rules
 
 1. **Delegate, don't duplicate.** Use the existing skills. Don't reimplement their logic.
 2. **Always read state first.** Never assume where the project is.
-3. **One task at a time.** Fully complete (via skill) before moving on.
-4. **Commit after each task.** Small, atomic commits.
-5. **Update ROADMAP.md checkboxes.** Source of truth for progress.
-6. **Record learnings.** Non-obvious discoveries go in state.md.
-7. **Don't skip tasks.** Phase ordering matters — foundations first.
-8. **Stop gracefully.** Always leave state clean for next `/go`.
-9. **Invoke skills by name.** Use the Skill tool: `/check`, `/review`, `/add-feature`, etc.
-10. **Verify after every skill.** Always run `/check` after delegated work completes.
+3. **Branch per phase.** Work on `phase-N/<slug>`, ship to main via PR.
+4. **One task at a time.** Fully complete (via skill) before moving on.
+5. **Commit after each task.** Small, atomic commits.
+6. **Update ROADMAP.md checkboxes.** Source of truth for progress.
+7. **Record learnings.** Non-obvious discoveries go in state.md.
+8. **Don't skip tasks.** Phase ordering matters — foundations first.
+9. **Stop gracefully.** Always leave state clean for next `/go`.
+10. **Invoke skills by name.** Use the Skill tool to call them.
+11. **Verify after every task.** Always run `/check` after delegated work completes.
+12. **Ship at phase boundaries.** Use `/ship` to PR the phase branch to main.

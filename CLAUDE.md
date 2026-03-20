@@ -36,13 +36,17 @@ This project uses automated enforcement via `.claude/` configuration:
 
 - **Skills** (`.claude/skills/`) — Project-specific slash commands:
   - **`/go`** — Autonomous orchestrator. Picks up where it left off, does what's next.
-  - `/test` — Run full quality gate (fmt + clippy + test)
-  - `/review` — Code review against project standards
-  - `/add-feature` — Add a feature following TDD + SDD workflow
-  - `/refactor` — Refactor with continuous test verification
-  - `/check` — Quick pass/fail quality gate report
-  - `/analyze-arch` — Architecture analysis against tech-stack.md
+  - **`/status`** — Read-only project dashboard. Where are we, what's next.
+  - `/spec` — Write a feature spec (SDD) without implementing
   - `/add-module` — Scaffold a new module following conventions
+  - `/add-feature` — Add a feature following TDD + SDD workflow
+  - `/fix` — Debug workflow: reproduce, test, fix, verify
+  - `/test` — Run full quality gate (fmt + clippy + test)
+  - `/check` — Quick pass/fail quality gate report
+  - `/review` — Pre-commit code review against project standards
+  - `/refactor` — Refactor with continuous test verification
+  - `/analyze-arch` — Architecture analysis against tech-stack.md
+  - **`/ship`** — Push branch, open PR, bump version, update changelog
 
 - **State** (`.repostat/state.md`) — Persistent project state across sessions.
   Updated by `/go`. Tracks current task, progress, learnings, and session log.
