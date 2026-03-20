@@ -6,7 +6,6 @@ use super::Snapshot;
 
 /// Errors that can occur during snapshot I/O.
 #[derive(Debug, thiserror::Error)]
-#[allow(dead_code)] // variants used by load_latest (next task wires it)
 pub(crate) enum SnapshotError {
     /// Failed to create the snapshots directory.
     #[error("failed to create snapshot directory: {0}")]
@@ -71,7 +70,6 @@ pub(crate) fn write_snapshot(
 /// Load the most recent snapshot from `.repostat/snapshots/`.
 ///
 /// Returns `None` if no snapshots exist or the directory doesn't exist.
-#[allow(dead_code)] // used by snapshot diffing (next task)
 pub(crate) fn load_latest(target_dir: &Path) -> Result<Option<Snapshot>, SnapshotError> {
     let dir = target_dir.join(SNAPSHOT_DIR);
     if !dir.exists() {

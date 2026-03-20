@@ -1,5 +1,6 @@
 //! Snapshot storage, serialization, and diffing.
 
+pub(crate) mod diff;
 pub(crate) mod store;
 
 use std::collections::BTreeMap;

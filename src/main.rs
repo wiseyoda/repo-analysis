@@ -50,8 +50,12 @@ fn main() {
 
     let agg = metrics::aggregate::aggregate(&file_results);
 
+    let previous = snapshot::store::load_latest(&path).ok().flatten();
+
     let snap = snapshot::Snapshot::from_aggregate(&agg, snapshot::current_git_sha());
     if let Err(e) = snapshot::store::write_snapshot(&path, &snap) {
         eprintln!("warning: failed to write snapshot: {e}");
     }
+
+    let _diff = previous.map(|prev| snapshot::diff::diff(&snap, &prev));
 }

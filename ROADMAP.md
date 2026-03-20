@@ -17,7 +17,7 @@ statistics with a terminal dashboard. Snapshots are stored and diffed.
 - [x] Generated/minified file detection and exclusion
 - [x] Metric aggregation: totals, per-language breakdowns, file counts
 - [x] Snapshot storage: write JSON to `.repostat/snapshots/`
-- [ ] Snapshot diffing: compare current run to most recent snapshot
+- [x] Snapshot diffing: compare current run to most recent snapshot
 - [ ] Terminal dashboard: compact box-drawn output with all Phase 1 metrics
 - [ ] `--json` flag for machine-readable output
 - [ ] `--markdown` flag for report generation
