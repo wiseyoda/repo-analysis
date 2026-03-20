@@ -41,3 +41,6 @@ grammars/
 
 # Temporary test fixtures created during test runs
 tests/tmp/
+
+# Claude Code local settings (personal, not shared)
+.claude/settings.local.json

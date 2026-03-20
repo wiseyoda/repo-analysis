@@ -17,6 +17,32 @@ Before writing ANY code, read these documents in order:
 4. **`docs/requirements.md`** — What we're building, in what order.
 5. **`docs/decisions.md`** — Why we made the choices we made.
 
+## Enforcement
+
+This project uses automated enforcement via `.claude/` configuration:
+
+- **Hooks** (`.claude/hooks/`) — Automated checks that run during development:
+  - `rust-safety.sh` — Blocks `unwrap()`, `expect()`, `panic!()` in non-test Rust code
+  - `protect-constitution.sh` — Blocks any edits to `docs/constitution.md`
+  - `pre-commit-check.sh` — Runs fmt + clippy + test before any `git commit`
+  - `post-edit-fmt.sh` — Auto-formats Rust files after edits
+  - `session-start.sh` — Injects project context at session start
+
+- **Rules** (`.claude/rules/`) — Path-specific instructions loaded contextually:
+  - `rust-source.md` — Loaded when editing `src/**/*.rs`
+  - `test-files.md` — Loaded when editing `tests/**/*.rs`
+  - `documentation.md` — Loaded when editing `docs/**/*.md`
+  - `cargo-config.md` — Loaded when editing `Cargo.toml`
+
+- **Skills** (`.claude/skills/`) — Project-specific slash commands:
+  - `/test` — Run full quality gate (fmt + clippy + test)
+  - `/review` — Code review against project standards
+  - `/add-feature` — Add a feature following TDD + SDD workflow
+  - `/refactor` — Refactor with continuous test verification
+  - `/check` — Quick pass/fail quality gate report
+  - `/analyze-arch` — Architecture analysis against tech-stack.md
+  - `/add-module` — Scaffold a new module following conventions
+
 ## Workflow
 
 ### Before Writing Code
@@ -48,9 +74,8 @@ Before writing ANY code, read these documents in order:
 ### Committing
 
 - Conventional Commits: `feat:`, `fix:`, `refactor:`, `test:`, `docs:`, `chore:`, `perf:`
-- Run `cargo fmt` before committing.
-- Run `cargo clippy -- -D warnings` before committing.
-- Run `cargo test` before committing.
+- The pre-commit hook will automatically run fmt, clippy, and tests.
+- If the hook blocks the commit, fix the issues before retrying.
 
 ## Architecture Quick Reference
 
