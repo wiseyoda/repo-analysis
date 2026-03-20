@@ -5,7 +5,7 @@ use std::process::Command;
 use std::time::Duration;
 
 /// Maximum time to wait for a single Claude CLI invocation.
-const TIMEOUT_SECS: u64 = 60;
+const TIMEOUT_SECS: u64 = 180;
 
 /// Detect whether the Claude CLI is available.
 ///
@@ -84,6 +84,7 @@ fn wait_with_timeout(
     // Use a thread to wait with timeout
     let (tx, rx) = std::sync::mpsc::channel();
 
+    let child_id = child.id();
     let handle = std::thread::spawn(move || {
         let result = child.wait_with_output();
         let _ = tx.send(result);
@@ -99,7 +100,11 @@ fn wait_with_timeout(
             Err(InvokeError::WaitFailed(e.to_string()))
         }
         Err(_) => {
-            // Timeout — thread will be abandoned (child process may linger)
+            // Timeout — kill the child process to avoid zombies
+            let _ = Command::new("kill")
+                .args(["-9", &child_id.to_string()])
+                .output();
+            let _ = handle.join();
             Err(InvokeError::Timeout)
         }
     }
@@ -126,7 +131,7 @@ pub(crate) enum InvokeError {
     EmptyOutput,
 
     /// Process timed out.
-    #[error("claude timed out after 60 seconds")]
+    #[error("claude timed out after 180 seconds")]
     Timeout,
 
     /// Failed to wait for process.

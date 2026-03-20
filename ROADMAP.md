@@ -134,3 +134,36 @@ analysis matches `git log --stat`. Cross-repo listing works.
 
 **Exit Criteria**: Install works via `cargo install` and `brew install`. CI is green.
 README is complete. The tool can analyze its own codebase.
+
+---
+
+## Phase 9: Developer Health Check
+
+**Goal**: Risk scoring, parallel AI, health exit codes, init command, diff mode, HTML output.
+See `docs/designs/phase-9-health-check.md` for full design.
+
+- [x] Bug fixes: silent file read errors (log + count skipped files)
+- [x] Bug fixes: AnalysisResult builder struct (replace 6-param from_aggregate)
+- [x] Bug fixes: corrupt snapshot friendly error + silent index write warning
+- [x] Bug fixes: warn when 0 files analyzed after filtering
+- [x] Bug fixes: integration test speed (REPOSTAT_SKIP_AI env var)
+- [x] Bug fixes: AI module unit tests (skills.rs + schema.rs)
+- [x] Bug fixes: add --verbose flag with phase timing
+- [x] Bug fixes: sync Cargo.toml version to 0.9.0
+- [x] Report module unit tests (dashboard.rs, markdown.rs, trend.rs)
+- [x] Per-file churn collection via `git log --name-only`
+- [x] Churn + complexity risk score computation and display
+- [x] Risk scores in snapshots (raw inputs: churn_count, max_complexity)
+- [x] Risk scores in dashboard, JSON, markdown output
+- [x] Parallel AI skills via `rayon::scope` (6 concurrent invocations)
+- [x] Health score exit codes (0=ok, 1=error, 10=warning, 20=critical)
+- [x] Health thresholds in config (`[health]` section in .repostat.toml)
+- [x] `repostat init` command with --force flag
+- [x] `repostat diff HEAD~N` scoped analysis (commits only, changed-files filter)
+- [x] HTML dashboard output with pure SVG charts (`--html` flag)
+- [x] Graceful degradation: no git → skip risk, no AI → skip AI section
+
+**Exit Criteria**: Risk scores appear in all output formats. AI analysis < 20s.
+Exit codes distinguish health (10/20) from errors (1). `repostat init` creates
+commented config. `repostat diff HEAD~5` shows changed-file metrics. HTML output
+is self-contained SVG. Integration tests < 10s. All bug fixes verified.

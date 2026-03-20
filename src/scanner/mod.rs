@@ -234,6 +234,7 @@ mod tests {
         let config = Config {
             exclude_patterns: vec!["generated/**".to_string()],
             include_patterns: vec![],
+            ..Config::default()
         };
         let files = scan(dir.path(), &config).unwrap();
 
@@ -251,6 +252,7 @@ mod tests {
         let config = Config {
             exclude_patterns: vec!["generated/**".to_string()],
             include_patterns: vec!["generated/keep.rs".to_string()],
+            ..Config::default()
         };
         let files = scan(dir.path(), &config).unwrap();
 

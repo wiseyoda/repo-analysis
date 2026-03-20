@@ -7,6 +7,7 @@ use crate::metrics::aggregate::AggregateMetrics;
 use crate::metrics::complexity::FunctionInfo;
 use crate::metrics::dependencies::DependencySummary;
 use crate::metrics::documentation::DocumentationMetrics;
+use crate::metrics::risk::RiskEntry;
 use crate::snapshot::diff::SnapshotDiff;
 
 use super::color::ColorWriter;
@@ -32,6 +33,10 @@ pub(crate) struct DashboardData<'a> {
     pub(crate) history_lines: Vec<usize>,
     /// Historical file counts for sparkline (from all snapshots).
     pub(crate) history_files: Vec<usize>,
+    /// Number of files skipped due to read errors.
+    pub(crate) skipped_files: usize,
+    /// Per-file risk entries (churn * complexity).
+    pub(crate) risk_entries: &'a [RiskEntry],
 }
 
 /// Render the terminal dashboard to stdout.
@@ -59,10 +64,56 @@ pub(crate) fn render(
     if let Some(docs) = data.doc_metrics {
         render_documentation(docs, &mut cw)?;
     }
+    if !data.risk_entries.is_empty() {
+        render_risk_hotspots(data.risk_entries, &mut cw)?;
+    }
     if let Some(ai) = data.ai_result {
         render_ai_analysis(ai, &mut cw)?;
     }
+    if data.skipped_files > 0 {
+        render_skipped_files(data.skipped_files, &mut cw)?;
+    }
     Ok(())
+}
+
+/// Render a warning line for skipped (unreadable) files.
+fn render_skipped_files(count: usize, cw: &mut ColorWriter) -> io::Result<()> {
+    cw.warn(&format!(
+        "⚠ {count} file{} skipped (unreadable)\n",
+        if count == 1 { "" } else { "s" },
+    ))?;
+    Ok(())
+}
+
+/// Render the risk hotspots section.
+fn render_risk_hotspots(entries: &[RiskEntry], cw: &mut ColorWriter) -> io::Result<()> {
+    cw.dim("├────────────────────────────────────────┤")?;
+    cw.newline()?;
+    cw.plain("│ ")?;
+    cw.bold("Risk Hotspots")?;
+    cw.newline()?;
+    cw.dim("│ ─────────────────────────────────────  │")?;
+    cw.newline()?;
+
+    let display_count = entries.len().min(10);
+    for entry in entries.iter().take(display_count) {
+        let short_path = truncate_path(&entry.file, 25);
+        cw.plain(&format!(
+            "│  {:<25} risk:{:>4}  churn:{:>3}  cx:{:>3}\n",
+            short_path, entry.risk_score, entry.churn_count, entry.max_complexity,
+        ))?;
+    }
+
+    Ok(())
+}
+
+/// Truncate a file path for display, keeping the end.
+fn truncate_path(path: &str, max: usize) -> String {
+    if path.len() <= max {
+        path.to_string()
+    } else {
+        format!("...{}", &path[path.len() - max + 3..])
+    }
 }
 
 /// Render dependencies section.
@@ -415,6 +466,8 @@ mod tests {
             ai_result: None,
             history_lines: vec![],
             history_files: vec![],
+            skipped_files: 0,
+            risk_entries: &[],
         }
     }
 
@@ -455,6 +508,8 @@ mod tests {
             ai_result: None,
             history_lines: vec![],
             history_files: vec![],
+            skipped_files: 0,
+            risk_entries: &[],
         };
         let mut buf = Vec::new();
         render(&data, &mut buf, false).unwrap();
@@ -566,6 +621,8 @@ mod tests {
             ai_result: None,
             history_lines: vec![],
             history_files: vec![],
+            skipped_files: 0,
+            risk_entries: &[],
         };
         let mut buf = Vec::new();
         render(&data, &mut buf, false).unwrap();
@@ -577,5 +634,34 @@ mod tests {
         assert!(output.contains("Doc-to-code:    0.15"));
         assert!(output.contains("README score:   4/5"));
         assert!(output.contains("Dir coverage:   1/2"));
+    }
+
+    #[test]
+    fn renders_skipped_files_warning() {
+        let agg = make_agg();
+        let dep = DependencySummary::default();
+        let mut data = make_data(&agg, &dep);
+        data.skipped_files = 3;
+        let mut buf = Vec::new();
+        render(&data, &mut buf, false).expect("render failed");
+        let output = String::from_utf8(buf).expect("invalid utf8");
+        assert!(
+            output.contains("3 files skipped (unreadable)"),
+            "expected skipped files warning in output",
+        );
+    }
+
+    #[test]
+    fn no_skipped_warning_when_zero() {
+        let agg = make_agg();
+        let dep = DependencySummary::default();
+        let data = make_data(&agg, &dep);
+        let mut buf = Vec::new();
+        render(&data, &mut buf, false).expect("render failed");
+        let output = String::from_utf8(buf).expect("invalid utf8");
+        assert!(
+            !output.contains("skipped"),
+            "should not show skipped warning when count is 0",
+        );
     }
 }

@@ -116,12 +116,24 @@ fn load_index(path: &Path) -> Option<RepoIndex> {
 }
 
 /// Save the repo index to disk.
+///
+/// Logs a warning on failure — index is non-critical.
 fn save_index(path: &Path, index: &RepoIndex) {
     if let Some(parent) = path.parent() {
-        let _ = std::fs::create_dir_all(parent);
+        if let Err(e) = std::fs::create_dir_all(parent) {
+            eprintln!("warning: failed to create repo index directory: {e}");
+            return;
+        }
     }
-    if let Ok(json) = serde_json::to_string_pretty(index) {
-        let _ = std::fs::write(path, json);
+    match serde_json::to_string_pretty(index) {
+        Ok(json) => {
+            if let Err(e) = std::fs::write(path, json) {
+                eprintln!("warning: failed to update repo index: {e}");
+            }
+        }
+        Err(e) => {
+            eprintln!("warning: failed to serialize repo index: {e}");
+        }
     }
 }
 

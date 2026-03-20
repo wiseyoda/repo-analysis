@@ -11,3 +11,4 @@ pub(crate) mod documentation;
 #[allow(dead_code)] // wired into trend/dashboard when git history is displayed
 pub(crate) mod git_history;
 pub(crate) mod loc;
+pub(crate) mod risk;
