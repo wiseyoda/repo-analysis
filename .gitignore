@@ -1,0 +1,43 @@
+# Rust build artifacts
+/target/
+**/*.rs.bk
+
+# Cargo lock is committed for binaries (this is a binary project)
+# Do NOT add Cargo.lock to gitignore
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# repostat's own analysis output (dogfooding)
+/.repostat/
+
+# OS
+Thumbs.db
+Desktop.ini
+
+# Coverage
+*.profraw
+*.profdata
+lcov.info
+tarpaulin-report.html
+coverage/
+
+# Debug
+*.dSYM/
+*.pdb
+
+# Tree-sitter compiled grammars (downloaded at runtime)
+grammars/
+
+# Temporary test fixtures created during test runs
+tests/tmp/
