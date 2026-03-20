@@ -4,6 +4,8 @@ use std::process;
 
 use rayon::prelude::*;
 
+#[allow(dead_code)] // wired into pipeline when dashboard integrates AI
+mod ai;
 mod cli;
 mod config;
 mod errors;
