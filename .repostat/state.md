@@ -4,8 +4,8 @@
 
 ## Current Task
 
-- **Phase:** 5
-- **Task:** Phase complete — all 13 tasks done
+- **Phase:** 6
+- **Task:** Phase complete — all 7 tasks done
 - **Status:** idle
 - **Blocker:** none
 - **Started:** —
@@ -25,21 +25,18 @@
 - [x] All 6 tasks — completed 2026-03-20 (shipped as v0.5.0, PR #4 merged)
 
 ### Phase 5: AI-Augmented Analysis
-- [x] Claude CLI detection — completed 2026-03-20
-- [x] Skill file system — completed 2026-03-20
-- [x] Claude CLI invocation — completed 2026-03-20
-- [x] Lenient JSON response parsing — completed 2026-03-20
-- [x] Architecture summary skill — completed 2026-03-20
-- [x] Feature inventory skill — completed 2026-03-20
-- [x] Code quality review skill — completed 2026-03-20
-- [x] Effort estimation skill — completed 2026-03-20
-- [x] Stale documentation detection skill — completed 2026-03-20
-- [x] Doc quality scoring skill — completed 2026-03-20
-- [x] AI results section in dashboard — completed 2026-03-20
-- [x] AI results stored in snapshots — completed 2026-03-20
-- [x] Graceful degradation when Claude CLI unavailable — completed 2026-03-20
+- [x] All 13 tasks — completed 2026-03-20 (shipped as v0.6.0, PR #5 merged)
 
-### Phase 6–7
+### Phase 6: History & Trends
+- [x] repostat trend subcommand with sparkline charts — completed 2026-03-20
+- [x] Git log integration — completed 2026-03-20
+- [x] Commit frequency and contributor count — completed 2026-03-20
+- [x] Snapshot comparison by timestamp or SHA — completed 2026-03-20
+- [x] Cross-repo index at ~/.repostat/repos.json — completed 2026-03-20
+- [x] repostat list subcommand — completed 2026-03-20
+- [x] Inline sparklines in dashboard — completed 2026-03-20
+
+### Phase 7
 - [ ] Not started
 
 ## Learnings
@@ -54,6 +51,8 @@
 - 2026-03-20: Must use --model haiku for Claude CLI invocation to avoid defaulting to slow model (ADR-007).
 - 2026-03-20: Dashboard render() hit clippy too_many_arguments at 9 params; refactored to DashboardData struct.
 - 2026-03-20: Lenient JSON parsing needs 3 strategies: direct parse, code block extraction, brace-delimited substring.
+- 2026-03-20: CLI refactored to subcommands while preserving backward compat (default = analyze).
+- 2026-03-20: Sparkline uses 8-level Unicode block chars ▁▂▃▄▅▆▇█, needs min 3 snapshots to display.
 
 ## Session Log
 
@@ -64,3 +63,4 @@
 | 2026-03-20 | Phase 3 (7 tasks) | Manifest parsing, lock files, coupling graph, fan-in/out, dashboard, snapshots |
 | 2026-03-20 | Phase 4 (6 tasks) | Doc inventory, ratio, README scoring, dir coverage, dashboard, snapshots |
 | 2026-03-20 | Phase 5 (13 tasks) | CLI detection, skill files, invocation, parsing, 6 skills, dashboard, snapshots, graceful degradation |
+| 2026-03-20 | Phase 6 (7 tasks) | Subcommands, trend sparklines, git history, cross-repo index, list, inline sparklines |

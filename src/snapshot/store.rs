@@ -106,6 +106,42 @@ pub(crate) fn load_latest(target_dir: &Path) -> Result<Option<Snapshot>, Snapsho
     Ok(Some(snapshot))
 }
 
+/// Load all snapshots from `.repostat/snapshots/`, sorted by timestamp ascending.
+///
+/// Returns an empty vec if no snapshots exist.
+pub(crate) fn load_all(target_dir: &Path) -> Result<Vec<Snapshot>, SnapshotError> {
+    let dir = target_dir.join(SNAPSHOT_DIR);
+    if !dir.exists() {
+        return Ok(Vec::new());
+    }
+
+    let mut entries: Vec<PathBuf> = std::fs::read_dir(&dir)
+        .map_err(|e| SnapshotError::ReadFailed {
+            path: dir.clone(),
+            source: e,
+        })?
+        .filter_map(|e| e.ok())
+        .map(|e| e.path())
+        .filter(|p| p.extension().is_some_and(|ext| ext == "json"))
+        .collect();
+
+    entries.sort();
+
+    let mut snapshots = Vec::new();
+    for path in &entries {
+        let content = match std::fs::read_to_string(path) {
+            Ok(c) => c,
+            Err(_) => continue, // skip unreadable files
+        };
+        match serde_json::from_str::<Snapshot>(&content) {
+            Ok(snap) => snapshots.push(snap),
+            Err(_) => continue, // skip corrupt files
+        }
+    }
+
+    Ok(snapshots)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

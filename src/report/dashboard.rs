@@ -28,6 +28,10 @@ pub(crate) struct DashboardData<'a> {
     pub(crate) doc_metrics: Option<&'a DocumentationMetrics>,
     /// AI analysis results.
     pub(crate) ai_result: Option<&'a AiAnalysisResult>,
+    /// Historical code line counts for sparkline (from all snapshots).
+    pub(crate) history_lines: Vec<usize>,
+    /// Historical file counts for sparkline (from all snapshots).
+    pub(crate) history_files: Vec<usize>,
 }
 
 /// Render the terminal dashboard to stdout.
@@ -38,7 +42,13 @@ pub(crate) fn render(
 ) -> io::Result<()> {
     let mut cw = ColorWriter::new(writer, color);
     render_header(&mut cw)?;
-    render_summary(data.agg, data.diff, &mut cw)?;
+    render_summary(
+        data.agg,
+        data.diff,
+        &data.history_lines,
+        &data.history_files,
+        &mut cw,
+    )?;
     render_language_breakdown(data.agg, &mut cw)?;
     if !data.hotspots.is_empty() {
         render_hotspots(data.hotspots, &mut cw)?;
@@ -246,6 +256,8 @@ fn render_header(cw: &mut ColorWriter) -> io::Result<()> {
 fn render_summary(
     agg: &AggregateMetrics,
     diff: Option<&SnapshotDiff>,
+    history_lines: &[usize],
+    history_files: &[usize],
     cw: &mut ColorWriter,
 ) -> io::Result<()> {
     cw.plain("│ ")?;
@@ -255,6 +267,9 @@ fn render_summary(
         cw.plain(" ")?;
         cw.delta(d.files_delta)?;
     }
+    if history_files.len() >= 3 {
+        cw.plain(&format!("  {}", super::trend::sparkline(history_files)))?;
+    }
     cw.newline()?;
 
     cw.plain("│ ")?;
@@ -263,6 +278,9 @@ fn render_summary(
     if let Some(d) = diff {
         cw.plain(" ")?;
         cw.delta(d.lines_delta.total)?;
+    }
+    if history_lines.len() >= 3 {
+        cw.plain(&format!("  {}", super::trend::sparkline(history_lines)))?;
     }
     cw.newline()?;
 
@@ -395,6 +413,8 @@ mod tests {
             dep_summary: dep,
             doc_metrics: None,
             ai_result: None,
+            history_lines: vec![],
+            history_files: vec![],
         }
     }
 
@@ -433,6 +453,8 @@ mod tests {
             dep_summary: &dep,
             doc_metrics: None,
             ai_result: None,
+            history_lines: vec![],
+            history_files: vec![],
         };
         let mut buf = Vec::new();
         render(&data, &mut buf, false).unwrap();
@@ -542,6 +564,8 @@ mod tests {
             dep_summary: &dep,
             doc_metrics: Some(&docs),
             ai_result: None,
+            history_lines: vec![],
+            history_files: vec![],
         };
         let mut buf = Vec::new();
         render(&data, &mut buf, false).unwrap();

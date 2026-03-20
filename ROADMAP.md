@@ -106,13 +106,13 @@ Graceful skip works when Claude CLI is missing. Results are stored in snapshots.
 
 **Goal**: Sparkline trends, git history integration, cross-repo tracking.
 
-- [ ] `repostat trend` subcommand with sparkline charts
-- [ ] Git log integration: lines added/removed per period
-- [ ] Commit frequency and contributor count from git
-- [ ] Snapshot comparison by timestamp or SHA
-- [ ] Cross-repo index at `~/.repostat/repos.json`
-- [ ] `repostat list` subcommand
-- [ ] Trend data in terminal (inline sparklines in dashboard)
+- [x] `repostat trend` subcommand with sparkline charts
+- [x] Git log integration: lines added/removed per period
+- [x] Commit frequency and contributor count from git
+- [x] Snapshot comparison by timestamp or SHA
+- [x] Cross-repo index at `~/.repostat/repos.json`
+- [x] `repostat list` subcommand
+- [x] Trend data in terminal (inline sparklines in dashboard)
 
 **Exit Criteria**: Sparklines render correctly for 5+ snapshots. Git history
 analysis matches `git log --stat`. Cross-repo listing works.
