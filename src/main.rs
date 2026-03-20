@@ -37,20 +37,47 @@ fn main() {
         }
     };
 
-    let file_results: Vec<_> = files
+    let analyzed: Vec<_> = files
         .par_iter()
         .filter(|f| !f.is_minified && !f.is_generated)
         .filter_map(|f| {
             let content = std::fs::read_to_string(&f.path).ok()?;
             let lines = metrics::loc::count_lines(&content, f.language);
-            Some(metrics::aggregate::FileResult {
-                language: f.language,
-                lines,
-            })
+            let functions = f
+                .language
+                .and_then(|lang| metrics::complexity::extract_functions(&content, lang))
+                .unwrap_or_default();
+            Some((f, lines, functions))
+        })
+        .collect();
+
+    let file_results: Vec<_> = analyzed
+        .iter()
+        .map(|(f, lines, _)| metrics::aggregate::FileResult {
+            language: f.language,
+            lines: *lines,
         })
         .collect();
 
     let agg = metrics::aggregate::aggregate(&file_results);
+
+    // Collect hotspots: top 10 most complex functions across all files
+    let mut all_functions: Vec<_> = analyzed
+        .iter()
+        .flat_map(|(f, _, functions)| {
+            let path = f
+                .path
+                .strip_prefix(&args.path)
+                .unwrap_or(&f.path)
+                .display()
+                .to_string();
+            functions
+                .iter()
+                .map(move |func| (path.clone(), func.clone()))
+        })
+        .collect();
+    all_functions.sort_by(|a, b| b.1.cyclomatic.cmp(&a.1.cyclomatic));
+    let hotspots: Vec<_> = all_functions.into_iter().take(10).collect();
 
     let previous = snapshot::store::load_latest(&args.path).ok().flatten();
 
@@ -78,7 +105,9 @@ fn main() {
     } else {
         let color = report::color::is_color_enabled();
         let mut stdout = std::io::stdout().lock();
-        if let Err(e) = report::dashboard::render(&agg, diff.as_ref(), &mut stdout, color) {
+        if let Err(e) =
+            report::dashboard::render(&agg, diff.as_ref(), &hotspots, &mut stdout, color)
+        {
             eprintln!("error: failed to render dashboard: {e}");
             process::exit(2);
         }
