@@ -48,5 +48,10 @@ fn main() {
         })
         .collect();
 
-    let _metrics = metrics::aggregate::aggregate(&file_results);
+    let agg = metrics::aggregate::aggregate(&file_results);
+
+    let snap = snapshot::Snapshot::from_aggregate(&agg, snapshot::current_git_sha());
+    if let Err(e) = snapshot::store::write_snapshot(&path, &snap) {
+        eprintln!("warning: failed to write snapshot: {e}");
+    }
 }

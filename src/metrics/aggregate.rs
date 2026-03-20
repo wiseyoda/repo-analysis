@@ -17,7 +17,6 @@ pub(crate) struct LanguageMetrics {
 
 /// Complete analysis result aggregated from all scanned files.
 #[derive(Debug, Clone)]
-#[allow(dead_code)] // fields read by dashboard/snapshot (upcoming)
 pub(crate) struct AggregateMetrics {
     /// Total number of files analyzed (excluding generated/minified).
     pub(crate) total_files: usize,
