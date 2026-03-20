@@ -1,6 +1,6 @@
 ---
 name: review
-version: 1.0.0
+version: 2.0.0
 description: |
   Pre-commit code review against project standards. Fix-first: auto-fixes mechanical
   issues, asks about judgment calls. Use before committing or when asked to "review",
@@ -131,30 +131,9 @@ Score each category (0-100), then compute weighted average:
 | Documentation | 15% | -10 per undocumented pub item |
 | Architecture fit | 10% | -15 per structural violation |
 
-## Step 7: Completion Summary
+## Step 7: Completion
 
-```
-+====================================================+
-|              CODE REVIEW SUMMARY                    |
-+====================================================+
-| Scope          | 5 files, 142 lines changed         |
-| Findings       | 8 total (3 critical, 5 info)       |
-| Auto-fixed     | 5                                  |
-| Asked          | 2 (both fixed)                     |
-| Skipped        | 1                                  |
-+----------------------------------------------------+
-| Category               | Score |                   |
-|------------------------|-------|                   |
-| Constitution           | 100   |                   |
-| Coding standard        |  85   |                   |
-| Test coverage          |  80   |                   |
-| Documentation          |  90   |                   |
-| Architecture fit       | 100   |                   |
-+----------------------------------------------------+
-| HEALTH SCORE: 91/100                               |
-| VERDICT: APPROVED — ready to commit                |
-+====================================================+
-```
+Output findings inline as you discover them. Do NOT print a summary box at the end.
 
 Verdicts:
 - **APPROVED** (90+): Ready to commit.

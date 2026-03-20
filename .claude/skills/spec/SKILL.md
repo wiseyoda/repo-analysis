@@ -1,6 +1,6 @@
 ---
 name: spec
-version: 1.0.0
+version: 2.0.0
 description: |
   Architect / tech writer. Write a feature spec (SDD) without implementing.
   Creates a docs/specs/ file with purpose, behavior, edge cases, and acceptance
@@ -140,24 +140,7 @@ Step-by-step description of what happens:
 
 ## Step 4: Completion
 
-```
-+====================================================+
-|              SPEC WRITTEN                           |
-+====================================================+
-| Feature    | <name>                                 |
-| Req IDs    | R-NNN, R-NNN                           |
-| File       | docs/specs/<slug>.md                   |
-| Status     | Draft                                  |
-+----------------------------------------------------+
-| Sections   | 10 (purpose, arch, inputs, outputs,    |
-|            | behavior, errors, edges, criteria,      |
-|            | testing, dependencies)                  |
-| Criteria   | N acceptance criteria defined           |
-| Open Qs    | M questions need resolution             |
-+----------------------------------------------------+
-| Next: /add-feature <name> to implement             |
-+====================================================+
-```
+When the spec is written and saved, the skill is done. Do NOT print a summary box.
 
 ## Important Rules
 
