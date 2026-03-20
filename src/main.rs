@@ -27,11 +27,19 @@ fn main() {
         }
     };
 
-    let _files = match scanner::scan(&path, &config) {
+    let files = match scanner::scan(&path, &config) {
         Ok(f) => f,
         Err(e) => {
             eprintln!("error: {e}");
             process::exit(1);
         }
     };
+
+    let _file_metrics: Vec<_> = files
+        .iter()
+        .filter_map(|f| {
+            let content = std::fs::read_to_string(&f.path).ok()?;
+            Some(metrics::loc::count_lines(&content, f.language))
+        })
+        .collect();
 }

@@ -13,7 +13,7 @@ statistics with a terminal dashboard. Snapshots are stored and diffed.
 - [x] `.repostat.toml` config file loading and validation
 - [x] File scanner: recursive walk with gitignore + heuristic + config exclusions
 - [x] Language detection from file extensions (50+ languages)
-- [ ] Line counting engine: code, comments, blanks — per file, per language
+- [x] Line counting engine: code, comments, blanks — per file, per language
 - [ ] Generated/minified file detection and exclusion
 - [ ] Metric aggregation: totals, per-language breakdowns, file counts
 - [ ] Snapshot storage: write JSON to `.repostat/snapshots/`
