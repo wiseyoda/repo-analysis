@@ -188,6 +188,26 @@ fn run_analyze(args: &cli::AnalyzeArgs) {
             eprintln!("error: failed to render markdown: {e}");
             process::exit(2);
         }
+    } else if args.html {
+        let html_path = args.path.join("repostat-report.html");
+        let html_data = report::html::HtmlData {
+            agg: &analysis.agg,
+            hotspots: &analysis.hotspots,
+            risk_entries: &analysis.risk_entries,
+        };
+        match std::fs::File::create(&html_path) {
+            Ok(mut file) => {
+                if let Err(e) = report::html::render(&html_data, &mut file) {
+                    eprintln!("error: failed to write HTML report: {e}");
+                    process::exit(2);
+                }
+                eprintln!("HTML report written to {}", html_path.display());
+            }
+            Err(e) => {
+                eprintln!("error: failed to create {}: {e}", html_path.display());
+                process::exit(2);
+            }
+        }
     } else {
         let color = report::color::is_color_enabled();
         let mut stdout = std::io::stdout().lock();

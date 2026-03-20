@@ -29,6 +29,10 @@ pub(crate) struct Args {
     /// Show per-phase timing on stderr.
     #[arg(long, short)]
     pub(crate) verbose: bool,
+
+    /// Generate an HTML report file in the target directory.
+    #[arg(long)]
+    pub(crate) html: bool,
 }
 
 /// Available subcommands.
@@ -102,6 +106,8 @@ pub(crate) struct AnalyzeArgs {
     pub(crate) markdown: bool,
     /// Whether to show per-phase timing.
     pub(crate) verbose: bool,
+    /// Whether to generate HTML output.
+    pub(crate) html: bool,
 }
 
 /// Arguments for the trend subcommand.
@@ -134,6 +140,7 @@ pub(crate) fn parse_and_validate() -> anyhow::Result<ValidatedCommand> {
                 json: args.json,
                 markdown: args.markdown,
                 verbose: args.verbose,
+                html: args.html,
             }))
         }
     }
