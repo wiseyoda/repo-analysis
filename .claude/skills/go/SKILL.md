@@ -1,10 +1,10 @@
 ---
 name: go
-version: 3.0.0
+version: 4.0.0
 description: |
   Autonomous project driver. Reads state, picks the next task, delegates to
-  the right skill, updates progress, and continues. Uses branch-per-phase
-  strategy. Run at any moment — picks up where it left off.
+  the right skill, updates progress, and loops until the phase is complete.
+  Uses branch-per-phase strategy. Run at any moment — picks up where it left off.
 user-invocable: true
 allowed-tools:
   - Bash
@@ -20,9 +20,11 @@ allowed-tools:
 
 ## What This Skill Does
 
-`/go` is a thin orchestrator. It does NOT implement features itself — it figures out
-what needs to happen and invokes the right skill to do it. Think of it as the project
-manager that delegates to specialists:
+`/go` is an autonomous loop that drives the project forward. It reads state,
+picks the next task, delegates to the right skill, commits, and **loops back**
+to pick the next task — until the phase is complete or a blocker is hit.
+
+It does NOT implement features itself — it delegates to specialists:
 
 | Situation | Delegates to |
 |-----------|-------------|
@@ -40,7 +42,43 @@ manager that delegates to specialists:
 
 ---
 
-## Step 1: Assess — Where Are We?
+## The Loop
+
+```
+┌─────────────────────────────────────────┐
+│  START: Assess (read state, branch)     │
+└──────────────┬──────────────────────────┘
+               ▼
+┌─────────────────────────────────────────┐
+│  Pick next unchecked task from ROADMAP  │◄────────────────┐
+└──────────────┬──────────────────────────┘                 │
+               ▼                                            │
+┌─────────────────────────────────────────┐                 │
+│  Delegate to skill (/add-feature, etc)  │                 │
+└──────────────┬──────────────────────────┘                 │
+               ▼                                            │
+┌─────────────────────────────────────────┐     ┌───────────┴──────┐
+│  Verify (/check), fix if needed         │────▶│  Blocked? → STOP │
+└──────────────┬──────────────────────────┘     └──────────────────┘
+               ▼
+┌─────────────────────────────────────────┐
+│  Record: ROADMAP ✓, state, commit       │
+└──────────────┬──────────────────────────┘
+               ▼
+┌─────────────────────────────────────────┐     ┌──────────────────┐
+│  More tasks in phase?                   │─No─▶│  Phase done →    │
+└──────────────┬──────────────────────────┘     │  finalize & STOP │
+               │ Yes                            └──────────────────┘
+               │
+               │  (periodic: /review every 3rd,
+               │   /refactor every 5th task)
+               │
+               └────────────────────────────────────────────┘
+```
+
+---
+
+## Step 1: Assess — Where Are We? (run once at start)
 
 Read state and project context:
 
@@ -65,7 +103,7 @@ Read `ROADMAP.md` to find the active phase (first phase with unchecked `- [ ]` i
 
 ---
 
-## Step 1b: Branch Management
+## Step 1b: Branch Management (run once at start)
 
 This project uses **branch-per-phase** strategy:
 
@@ -86,7 +124,9 @@ git checkout -b phase-N/<slug>
 
 ---
 
-## Step 2: Plan — What's Next?
+## LOOP START — Repeat Steps 2–6 for each task
+
+### Step 2: Plan — What's Next?
 
 Find the next task: the first unchecked `- [ ]` item in the active ROADMAP phase.
 
@@ -107,9 +147,9 @@ Update `.repostat/state.md` — set the task to `status: in-progress`.
 
 ---
 
-## Step 3: Execute — Delegate to the Right Skill
+### Step 3: Execute — Delegate to the Right Skill
 
-### For scaffolding (Cargo.toml, module structure):
+#### For scaffolding (Cargo.toml, module structure):
 
 This is the one case where `/go` works directly, because it's wiring up the project
 skeleton. Create `Cargo.toml`, set up the directory structure from `docs/tech-stack.md`,
@@ -120,7 +160,7 @@ and use `/add-module` for each module that needs creating:
 3. For each module in the planned structure, invoke: **Skill: `/add-module <name>`**
 4. Invoke: **Skill: `/check`** to verify everything compiles
 
-### For features / enhancements:
+#### For features / enhancements:
 
 Compose the task description from ROADMAP.md + the matching requirements in `docs/requirements.md`.
 
@@ -137,117 +177,116 @@ TDD+SDD cycle (failing test → implement → refactor → verify).
 
 For simple features (single file, obvious design), skip `/spec` and go straight to `/add-feature`.
 
-### For infra tasks (CI, completions):
+#### For infra tasks (CI, completions):
 
 Handle directly — create the files, test them, verify.
 
 ---
 
-## Step 4: Verify — Run Quality Checks
+### Step 4: Verify — Run Quality Checks
 
 After the delegated skill completes, run a verification pass:
 
 **Skill: `/check`**
 
-This gives a quick PASS/FAIL. If it fails, fix issues before proceeding.
+This gives a quick PASS/FAIL. If it fails, invoke **Skill: `/fix <error>`** and retry.
+If the fix fails twice, mark the task as blocked and STOP.
 
-If this is the 3rd+ task completed in the session, also run:
-
-**Skill: `/review`**
-
-This catches anything that accumulated across multiple tasks (coupling, missed docs, etc).
+**Periodic maintenance** (counted across the entire session, not reset per loop):
+- Every 3rd completed task: also run **Skill: `/review`**
+- Every 5th completed task: also run **Skill: `/refactor`** on the largest changed files
+  and **Skill: `/analyze-arch`** to check for structural drift
 
 ---
 
-## Step 5: Record — Update Everything
+### Step 5: Record — Update Everything
 
-### 5a. Mark ROADMAP.md checkbox
+#### 5a. Mark ROADMAP.md checkbox
 Use Edit to change `- [ ] <task text>` to `- [x] <task text>` for the completed task.
 
-### 5b. Update `.repostat/state.md`
+#### 5b. Update `.repostat/state.md`
 - Move the completed task to the Progress section with today's date
-- Set Current Task to the next unchecked item (or `status: idle` if stopping)
+- Set Current Task to the next unchecked item (or `status: idle` if phase is done)
 - Add any learnings to the Learnings section
+- Update session log
 
-### 5c. Commit
+#### 5c. Commit
 Stage and commit all changes with a Conventional Commit message:
 ```bash
 git add <specific files>
 git commit -m "<type>(<scope>): <description>"
 ```
 
+The commit message must end with:
+```
+Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
+```
+
 ---
 
-## Step 6: Continue or Stop?
+### Step 6: Continue or Stop?
 
-### Handling Failures
-
-If `/check` or `/test` fails after a task:
-1. Read the error output carefully
-2. Invoke **Skill: `/fix <error description>`** to diagnose and fix
-3. Re-run `/check` to verify the fix
-4. If the fix works, continue. If not, mark the task as blocked in state.md.
-
-**Continue if:**
+**CONTINUE (loop back to Step 2) if:**
 - More unchecked tasks remain in the current phase
 - No blockers encountered
-- The session is productive (no repeated failures)
+- No repeated failures (2+ consecutive failures = stop)
 
-**Stop gracefully if:**
-- Phase complete → verify exit criteria, then ask about next phase
-- Blocker hit → record it, ask user
-- 3+ substantial tasks done → keep commits reviewable
-- Ambiguity → don't guess, ask
+**STOP if:**
+- Phase complete → go to Phase Completion below
+- Blocker hit → record it in state.md, print summary, ask user
+- 2+ consecutive task failures → record, print summary, ask user
+- Ambiguity on a task → don't guess, ask user
 
-### Phase Completion
+**DO NOT stop just because N tasks are done.** The goal is to complete the phase.
+
+---
+
+## LOOP END
+
+---
+
+## Phase Completion
 
 When all items in a phase are checked:
 
-1. Run **Skill: `/analyze-arch`** to verify structural health
-2. Run **Skill: `/test`** for full test suite verification
-3. Run **Skill: `/refactor`** on any files that grew large during the phase
-4. Check exit criteria from ROADMAP.md
-5. Use AskUserQuestion:
+1. Run **Skill: `/test`** for full test suite verification
+2. Run **Skill: `/analyze-arch`** to verify structural health
+3. Run **Skill: `/review`** for a final review pass
+4. Run **Skill: `/refactor`** on any files that grew large during the phase
+5. Check exit criteria from ROADMAP.md
+6. Use AskUserQuestion:
    - "Phase N complete. Exit criteria: [list]. All met. Ready to ship?"
    - A) Run `/ship` to open a PR and merge this phase to main
-   - B) Run `/review` first for a thorough check before shipping
-   - C) Keep working — there's more to polish
-   - D) Stop here
+   - B) Keep working — there's more to polish
+   - C) Stop here
    - RECOMMENDATION: Choose A — the quality gate already passed, let's ship it.
 
-6. If shipping: invoke **Skill: `/ship`** to push the phase branch and open a PR.
-7. After merge, create the next phase branch:
+7. If shipping: invoke **Skill: `/ship`** to push the phase branch and open a PR.
+8. After merge, create the next phase branch:
    ```bash
    git checkout main && git pull && git checkout -b phase-N+1/<slug>
    ```
-
-### Periodic Maintenance
-
-Every 5 completed tasks (check the session log), suggest:
-- **Skill: `/refactor`** on the largest/most-changed files
-- **Skill: `/analyze-arch`** to check for structural drift
 
 ---
 
 ## Status Summary
 
-Print this when stopping:
+Print this when stopping (whether at phase completion, blocker, or error):
 
 ```
 +====================================================+
 |              /go — SESSION SUMMARY                  |
 +====================================================+
-| Phase        | 1: Foundation & Core Metrics         |
-| Tasks done   | 3 this session                       |
-| Total done   | 5 / 15 in phase                      |
-| Next task    | Line counting engine                 |
-| Blockers     | None                                 |
+| Phase        | N: <phase name>                      |
+| Tasks done   | X this session                       |
+| Total done   | Y / Z in phase                       |
+| Next task    | <next task or "Phase complete">       |
+| Blockers     | <None or description>                |
 +----------------------------------------------------+
-| Skills used  | /add-module x2, /add-feature x1,     |
-|              | /check x3, /review x1                |
+| Skills used  | /add-feature xN, /check xN, ...      |
 +----------------------------------------------------+
-| Quality gate | PASS (fmt, clippy, test)             |
-| Commits      | 3 new                                |
+| Quality gate | PASS/FAIL (fmt, clippy, test)        |
+| Commits      | N new                                |
 +----------------------------------------------------+
 | Run /go again to continue.                         |
 +====================================================+
@@ -324,15 +363,16 @@ If still unclear: AskUserQuestion. Don't guess on architecture.
 
 ## Important Rules
 
-1. **Delegate, don't duplicate.** Use the existing skills. Don't reimplement their logic.
-2. **Always read state first.** Never assume where the project is.
-3. **Branch per phase.** Work on `phase-N/<slug>`, ship to main via PR.
-4. **One task at a time.** Fully complete (via skill) before moving on.
-5. **Commit after each task.** Small, atomic commits.
-6. **Update ROADMAP.md checkboxes.** Source of truth for progress.
-7. **Record learnings.** Non-obvious discoveries go in state.md.
-8. **Don't skip tasks.** Phase ordering matters — foundations first.
-9. **Stop gracefully.** Always leave state clean for next `/go`.
-10. **Invoke skills by name.** Use the Skill tool to call them.
-11. **Verify after every task.** Always run `/check` after delegated work completes.
-12. **Ship at phase boundaries.** Use `/ship` to PR the phase branch to main.
+1. **Loop until done.** Don't stop after one task. Complete the phase.
+2. **Delegate, don't duplicate.** Use the existing skills. Don't reimplement their logic.
+3. **Always read state first.** Never assume where the project is.
+4. **Branch per phase.** Work on `phase-N/<slug>`, ship to main via PR.
+5. **One task at a time.** Fully complete (via skill) before moving on.
+6. **Commit after each task.** Small, atomic commits.
+7. **Update ROADMAP.md checkboxes.** Source of truth for progress.
+8. **Record learnings.** Non-obvious discoveries go in state.md.
+9. **Don't skip tasks.** Phase ordering matters — foundations first.
+10. **Stop gracefully on errors.** Always leave state clean for next `/go`.
+11. **Invoke skills by name.** Use the Skill tool to call them.
+12. **Verify after every task.** Always run `/check` after delegated work completes.
+13. **Ship at phase boundaries.** Use `/ship` to PR the phase branch to main.
