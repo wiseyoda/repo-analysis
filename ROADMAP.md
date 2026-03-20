@@ -15,7 +15,7 @@ statistics with a terminal dashboard. Snapshots are stored and diffed.
 - [x] Language detection from file extensions (50+ languages)
 - [x] Line counting engine: code, comments, blanks — per file, per language
 - [x] Generated/minified file detection and exclusion
-- [ ] Metric aggregation: totals, per-language breakdowns, file counts
+- [x] Metric aggregation: totals, per-language breakdowns, file counts
 - [ ] Snapshot storage: write JSON to `.repostat/snapshots/`
 - [ ] Snapshot diffing: compare current run to most recent snapshot
 - [ ] Terminal dashboard: compact box-drawn output with all Phase 1 metrics

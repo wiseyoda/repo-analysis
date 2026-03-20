@@ -3,7 +3,7 @@
 use std::path::Path;
 
 /// A programming language identified by file extension.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[allow(clippy::upper_case_acronyms)]
 pub(crate) enum Language {
     /// Rust (.rs)

@@ -6,13 +6,25 @@ use crate::scanner::language::Language;
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub(crate) struct LineMetrics {
     /// Total number of lines in the file.
-    pub total_lines: usize,
+    pub(crate) total_lines: usize,
     /// Lines containing executable code (not blank, not pure comment).
-    pub code_lines: usize,
+    pub(crate) code_lines: usize,
     /// Lines containing only whitespace.
-    pub blank_lines: usize,
+    pub(crate) blank_lines: usize,
     /// Lines that are pure comments.
-    pub comment_lines: usize,
+    pub(crate) comment_lines: usize,
+}
+
+impl LineMetrics {
+    /// Add two LineMetrics together (for aggregation).
+    pub(crate) fn add(&self, other: &Self) -> Self {
+        Self {
+            total_lines: self.total_lines + other.total_lines,
+            code_lines: self.code_lines + other.code_lines,
+            blank_lines: self.blank_lines + other.blank_lines,
+            comment_lines: self.comment_lines + other.comment_lines,
+        }
+    }
 }
 
 /// Comment syntax definition for a language.
