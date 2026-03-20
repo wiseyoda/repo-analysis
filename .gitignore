@@ -18,8 +18,9 @@
 .env.*
 !.env.example
 
-# repostat's own analysis output (dogfooding)
-/.repostat/
+# repostat's own analysis output (dogfooding) — except state.md which is tracked
+/.repostat/snapshots/
+!/.repostat/state.md
 
 # OS
 Thumbs.db

@@ -35,6 +35,7 @@ This project uses automated enforcement via `.claude/` configuration:
   - `cargo-config.md` — Loaded when editing `Cargo.toml`
 
 - **Skills** (`.claude/skills/`) — Project-specific slash commands:
+  - **`/go`** — Autonomous orchestrator. Picks up where it left off, does what's next.
   - `/test` — Run full quality gate (fmt + clippy + test)
   - `/review` — Code review against project standards
   - `/add-feature` — Add a feature following TDD + SDD workflow
@@ -42,6 +43,9 @@ This project uses automated enforcement via `.claude/` configuration:
   - `/check` — Quick pass/fail quality gate report
   - `/analyze-arch` — Architecture analysis against tech-stack.md
   - `/add-module` — Scaffold a new module following conventions
+
+- **State** (`.repostat/state.md`) — Persistent project state across sessions.
+  Updated by `/go`. Tracks current task, progress, learnings, and session log.
 
 ## Workflow
 
