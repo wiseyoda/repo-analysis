@@ -57,7 +57,7 @@ Hotspots correctly identify the most complex code. All 10 bundled grammars work.
 - [x] Import/require/use statement parsing for internal dependency graph
 - [x] Fan-in / fan-out calculation per module
 - [x] Dependencies section in dashboard
-- [ ] Dependency data in snapshots
+- [x] Dependency data in snapshots
 
 **Exit Criteria**: Dependency counts match manual verification. Internal coupling
 graph identifies the most-connected modules.

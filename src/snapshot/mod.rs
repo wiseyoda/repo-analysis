@@ -24,6 +24,33 @@ pub(crate) struct Snapshot {
     /// Complexity hotspots (top N most complex functions).
     #[serde(default)]
     pub(crate) hotspots: Vec<SnapshotHotspot>,
+    /// Dependency information.
+    #[serde(default)]
+    pub(crate) dependencies: Option<SnapshotDependencies>,
+}
+
+/// Dependency data stored in a snapshot.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub(crate) struct SnapshotDependencies {
+    /// Number of manifest files found.
+    pub(crate) manifest_count: usize,
+    /// Total direct dependencies.
+    pub(crate) direct: usize,
+    /// Total transitive dependencies (from lock files).
+    pub(crate) transitive: Option<usize>,
+    /// Per-manifest breakdown.
+    pub(crate) manifests: Vec<SnapshotManifest>,
+}
+
+/// Per-manifest entry in a snapshot.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub(crate) struct SnapshotManifest {
+    /// Manifest filename.
+    pub(crate) name: String,
+    /// Ecosystem type.
+    pub(crate) ecosystem: String,
+    /// Number of direct dependencies.
+    pub(crate) deps: usize,
 }
 
 /// A complexity hotspot stored in a snapshot.
@@ -64,11 +91,12 @@ pub(crate) struct SnapshotLanguageEntry {
 }
 
 impl Snapshot {
-    /// Build a snapshot from aggregate metrics and hotspot data.
+    /// Build a snapshot from aggregate metrics, hotspots, and dependency data.
     pub(crate) fn from_aggregate(
         agg: &crate::metrics::aggregate::AggregateMetrics,
         git_sha: Option<String>,
         hotspots: &[(String, crate::metrics::complexity::FunctionInfo)],
+        dep_summary: &crate::metrics::dependencies::DependencySummary,
     ) -> Self {
         let mut by_language = BTreeMap::new();
         for (lang, metrics) in &agg.by_language {
@@ -101,6 +129,30 @@ impl Snapshot {
             })
             .collect();
 
+        let dependencies = if dep_summary.manifests.is_empty() {
+            None
+        } else {
+            Some(SnapshotDependencies {
+                manifest_count: dep_summary.manifests.len(),
+                direct: dep_summary.total_direct,
+                transitive: dep_summary.total_transitive,
+                manifests: dep_summary
+                    .manifests
+                    .iter()
+                    .map(|m| SnapshotManifest {
+                        name: m
+                            .file_path
+                            .file_name()
+                            .and_then(|n| n.to_str())
+                            .unwrap_or("unknown")
+                            .to_string(),
+                        ecosystem: format!("{:?}", m.manifest_type),
+                        deps: m.direct_deps.len(),
+                    })
+                    .collect(),
+            })
+        };
+
         Self {
             timestamp: Utc::now(),
             git_sha,
@@ -108,6 +160,7 @@ impl Snapshot {
             total_lines: SnapshotLineMetrics::from_line_metrics(&agg.total_lines),
             by_language,
             hotspots: snapshot_hotspots,
+            dependencies,
         }
     }
 }
@@ -172,7 +225,8 @@ mod tests {
             unknown_language: LanguageMetrics::default(),
         };
 
-        let snap = Snapshot::from_aggregate(&agg, Some("abc123".to_string()), &[]);
+        let dep_default = crate::metrics::dependencies::DependencySummary::default();
+        let snap = Snapshot::from_aggregate(&agg, Some("abc123".to_string()), &[], &dep_default);
         assert_eq!(snap.total_files, 3);
         assert_eq!(snap.total_lines.code, 80);
         assert_eq!(snap.git_sha, Some("abc123".to_string()));
@@ -208,6 +262,7 @@ mod tests {
             },
             by_language,
             hotspots: vec![],
+            dependencies: None,
         };
 
         let json = serde_json::to_string_pretty(&snap).unwrap();

@@ -83,7 +83,12 @@ fn main() {
 
     let previous = snapshot::store::load_latest(&args.path).ok().flatten();
 
-    let snap = snapshot::Snapshot::from_aggregate(&agg, snapshot::current_git_sha(), &hotspots);
+    let snap = snapshot::Snapshot::from_aggregate(
+        &agg,
+        snapshot::current_git_sha(),
+        &hotspots,
+        &dep_summary,
+    );
     if let Err(e) = snapshot::store::write_snapshot(&args.path, &snap) {
         eprintln!("warning: failed to write snapshot: {e}");
     }
