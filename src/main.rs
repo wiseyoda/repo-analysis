@@ -177,7 +177,12 @@ fn run_analyze(args: &cli::AnalyzeArgs) {
         }
     } else if args.markdown {
         let mut stdout = std::io::stdout().lock();
-        if let Err(e) = report::markdown::render(&analysis.agg, diff.as_ref(), &mut stdout) {
+        if let Err(e) = report::markdown::render(
+            &analysis.agg,
+            diff.as_ref(),
+            &analysis.risk_entries,
+            &mut stdout,
+        ) {
             eprintln!("error: failed to render markdown: {e}");
             process::exit(2);
         }
