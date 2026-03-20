@@ -66,3 +66,16 @@ fn defaults_to_current_directory() {
     // Running without args should succeed (uses cwd)
     Command::cargo_bin("repostat").unwrap().assert().success();
 }
+
+#[test]
+fn warns_on_empty_directory() {
+    let dir = TempDir::new().unwrap();
+    Command::cargo_bin("repostat")
+        .unwrap()
+        .arg(dir.path())
+        .assert()
+        .success()
+        .stderr(predicate::str::contains(
+            "no source files found after filtering",
+        ));
+}

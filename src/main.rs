@@ -78,6 +78,13 @@ fn run_analyze(args: &cli::AnalyzeArgs) {
         .collect();
     let skipped_files = skipped_count.load(std::sync::atomic::Ordering::Relaxed);
 
+    if analyzed.is_empty() {
+        eprintln!(
+            "warning: no source files found after filtering. \
+             Check your .repostat.toml exclude patterns."
+        );
+    }
+
     let file_results: Vec<_> = analyzed
         .iter()
         .map(|(f, lines, _)| metrics::aggregate::FileResult {
