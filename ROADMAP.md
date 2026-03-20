@@ -9,7 +9,7 @@
 statistics with a terminal dashboard. Snapshots are stored and diffed.
 
 - [x] Project scaffold: `Cargo.toml`, module structure, CI config
-- [ ] CLI argument parsing with `clap` (path argument, `--help`, `--version`)
+- [x] CLI argument parsing with `clap` (path argument, `--help`, `--version`)
 - [ ] `.repostat.toml` config file loading and validation
 - [ ] File scanner: recursive walk with gitignore + heuristic + config exclusions
 - [ ] Language detection from file extensions (50+ languages)

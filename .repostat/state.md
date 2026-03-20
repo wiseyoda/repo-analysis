@@ -5,7 +5,7 @@
 ## Current Task
 
 - **Phase:** 1
-- **Task:** CLI argument parsing with `clap` (path argument, `--help`, `--version`)
+- **Task:** `.repostat.toml` config file loading and validation
 - **Status:** idle
 - **Blocker:** none
 - **Started:** —
@@ -14,7 +14,7 @@
 
 ### Phase 1: Foundation & Core Metrics
 - [x] Project scaffold: `Cargo.toml`, module structure, CI config — completed 2026-03-19
-- [ ] CLI argument parsing with `clap` (path argument, `--help`, `--version`)
+- [x] CLI argument parsing with `clap` (path argument, `--help`, `--version`) — completed 2026-03-19
 - [ ] `.repostat.toml` config file loading and validation
 - [ ] File scanner: recursive walk with gitignore + heuristic + config exclusions
 - [ ] Language detection from file extensions (50+ languages)
@@ -44,3 +44,4 @@
 |------|----------------|-------|
 | — | — | Project initialized with docs and .claude config |
 | 2026-03-19 | Project scaffold | Cargo.toml, 9 source files, CI config, 3 integration tests. Quality gate passes. |
+| 2026-03-19 | CLI argument parsing | Path validation, error handling, spec + 4 new integration tests. |
