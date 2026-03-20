@@ -11,15 +11,15 @@ mod scanner;
 mod snapshot;
 
 fn main() {
-    let path = match cli::parse_and_validate() {
-        Ok(p) => p,
+    let args = match cli::parse_and_validate() {
+        Ok(a) => a,
         Err(e) => {
             eprintln!("error: {e}");
             process::exit(1);
         }
     };
 
-    let config = match config::Config::load(&path) {
+    let config = match config::Config::load(&args.path) {
         Ok(c) => c,
         Err(e) => {
             eprintln!("error: {e}");
@@ -27,7 +27,7 @@ fn main() {
         }
     };
 
-    let files = match scanner::scan(&path, &config) {
+    let files = match scanner::scan(&args.path, &config) {
         Ok(f) => f,
         Err(e) => {
             eprintln!("error: {e}");
@@ -50,18 +50,32 @@ fn main() {
 
     let agg = metrics::aggregate::aggregate(&file_results);
 
-    let previous = snapshot::store::load_latest(&path).ok().flatten();
+    let previous = snapshot::store::load_latest(&args.path).ok().flatten();
 
     let snap = snapshot::Snapshot::from_aggregate(&agg, snapshot::current_git_sha());
-    if let Err(e) = snapshot::store::write_snapshot(&path, &snap) {
+    if let Err(e) = snapshot::store::write_snapshot(&args.path, &snap) {
         eprintln!("warning: failed to write snapshot: {e}");
     }
 
     let diff = previous.map(|prev| snapshot::diff::diff(&snap, &prev));
 
-    let mut stdout = std::io::stdout().lock();
-    if let Err(e) = report::dashboard::render(&agg, diff.as_ref(), &mut stdout) {
-        eprintln!("error: failed to render dashboard: {e}");
-        process::exit(2);
+    if args.json {
+        match serde_json::to_string_pretty(&snap) {
+            Ok(json) => println!("{json}"),
+            Err(e) => {
+                eprintln!("error: failed to serialize JSON: {e}");
+                process::exit(2);
+            }
+        }
+    } else if args.markdown {
+        // Markdown output will be implemented in the next task
+        eprintln!("error: --markdown not yet implemented");
+        process::exit(1);
+    } else {
+        let mut stdout = std::io::stdout().lock();
+        if let Err(e) = report::dashboard::render(&agg, diff.as_ref(), &mut stdout) {
+            eprintln!("error: failed to render dashboard: {e}");
+            process::exit(2);
+        }
     }
 }

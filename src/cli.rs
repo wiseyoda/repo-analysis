@@ -11,14 +11,31 @@ use crate::errors::RepostatError;
 #[command(name = "repostat", version, about)]
 pub(crate) struct Args {
     /// Path to the repository to analyze [default: current directory].
-    pub path: Option<PathBuf>,
+    pub(crate) path: Option<PathBuf>,
+
+    /// Output raw JSON to stdout instead of the dashboard.
+    #[arg(long, short)]
+    pub(crate) json: bool,
+
+    /// Generate a Markdown report file.
+    #[arg(long, short)]
+    pub(crate) markdown: bool,
+}
+
+/// Parsed and validated CLI arguments.
+pub(crate) struct ValidatedArgs {
+    /// Validated target directory path.
+    pub(crate) path: PathBuf,
+    /// Whether to output JSON.
+    pub(crate) json: bool,
+    /// Whether to output Markdown.
+    pub(crate) markdown: bool,
 }
 
 /// Parse command-line arguments and validate the target path.
 ///
 /// Defaults to the current working directory if no path is provided.
-/// Returns the validated, canonicalized path.
-pub(crate) fn parse_and_validate() -> anyhow::Result<PathBuf> {
+pub(crate) fn parse_and_validate() -> anyhow::Result<ValidatedArgs> {
     let args = Args::parse();
 
     let path = match args.path {
@@ -34,5 +51,9 @@ pub(crate) fn parse_and_validate() -> anyhow::Result<PathBuf> {
         return Err(RepostatError::NotADirectory(path).into());
     }
 
-    Ok(path)
+    Ok(ValidatedArgs {
+        path,
+        json: args.json,
+        markdown: args.markdown,
+    })
 }
