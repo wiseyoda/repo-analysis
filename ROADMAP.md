@@ -21,7 +21,7 @@ statistics with a terminal dashboard. Snapshots are stored and diffed.
 - [x] Terminal dashboard: compact box-drawn output with all Phase 1 metrics
 - [x] `--json` flag for machine-readable output
 - [x] `--markdown` flag for report generation
-- [ ] Parallel file processing with `rayon`
+- [x] Parallel file processing with `rayon`
 - [ ] Color support with `NO_COLOR` respect
 
 **Exit Criteria**: Run `repostat ./path` on 3+ real repos. Output is accurate, fast (<2s

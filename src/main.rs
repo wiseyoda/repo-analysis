@@ -2,6 +2,8 @@
 
 use std::process;
 
+use rayon::prelude::*;
+
 mod cli;
 mod config;
 mod errors;
@@ -36,7 +38,7 @@ fn main() {
     };
 
     let file_results: Vec<_> = files
-        .iter()
+        .par_iter()
         .filter(|f| !f.is_minified && !f.is_generated)
         .filter_map(|f| {
             let content = std::fs::read_to_string(&f.path).ok()?;
