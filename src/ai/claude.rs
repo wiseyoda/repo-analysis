@@ -57,7 +57,23 @@ pub(crate) fn invoke(
         return Err(InvokeError::EmptyOutput);
     }
 
-    Ok(stdout)
+    // Claude CLI --output-format json wraps the response in an envelope:
+    // {"type":"result","result":"...actual content..."}
+    // Extract the inner "result" field if present.
+    Ok(extract_result_field(&stdout))
+}
+
+/// Extract the "result" field from Claude CLI's JSON envelope.
+///
+/// If the output is a JSON object with a "result" string field, returns that string.
+/// Otherwise returns the raw output unchanged.
+fn extract_result_field(raw: &str) -> String {
+    if let Ok(value) = serde_json::from_str::<serde_json::Value>(raw.trim()) {
+        if let Some(result) = value.get("result").and_then(|v| v.as_str()) {
+            return result.to_string();
+        }
+    }
+    raw.to_string()
 }
 
 /// Wait for a child process with a timeout.
