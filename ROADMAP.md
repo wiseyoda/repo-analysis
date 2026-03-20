@@ -37,7 +37,7 @@ for 50k lines), and the dashboard is readable. Snapshots persist and diffs displ
 - [x] Cyclomatic complexity calculation per function and per file
 - [x] Cognitive complexity calculation (nested-logic weighting)
 - [x] Function extraction: name, line count, complexity per function
-- [ ] File size and function size threshold flagging
+- [x] File size and function size threshold flagging
 - [ ] Complexity hotspots section in the dashboard (top N worst)
 - [ ] Regex fallback for unsupported languages
 - [ ] Complexity data in snapshots for trend tracking

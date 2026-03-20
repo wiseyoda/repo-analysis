@@ -112,6 +112,69 @@ pub(crate) fn cognitive_complexity(
     })
 }
 
+/// Default threshold for flagging large functions (lines).
+pub(crate) const DEFAULT_FUNCTION_SIZE_THRESHOLD: usize = 50;
+
+/// Default threshold for flagging large files (lines).
+pub(crate) const DEFAULT_FILE_SIZE_THRESHOLD: usize = 500;
+
+/// A flagged item that exceeds a threshold.
+#[derive(Debug, Clone)]
+pub(crate) struct ThresholdViolation {
+    /// Name of the file or function.
+    pub(crate) name: String,
+    /// The measured value (lines or complexity).
+    pub(crate) value: usize,
+    /// The threshold that was exceeded.
+    pub(crate) threshold: usize,
+    /// What kind of violation this is.
+    pub(crate) kind: ViolationKind,
+}
+
+/// The type of threshold violation.
+#[derive(Debug, Clone)]
+pub(crate) enum ViolationKind {
+    /// Function exceeds line count threshold.
+    LargeFunction,
+    /// File exceeds line count threshold.
+    LargeFile,
+}
+
+/// Check functions for size threshold violations.
+pub(crate) fn flag_large_functions(
+    functions: &[FunctionInfo],
+    threshold: usize,
+) -> Vec<ThresholdViolation> {
+    functions
+        .iter()
+        .filter(|f| f.line_count > threshold)
+        .map(|f| ThresholdViolation {
+            name: f.name.clone(),
+            value: f.line_count,
+            threshold,
+            kind: ViolationKind::LargeFunction,
+        })
+        .collect()
+}
+
+/// Check if a file exceeds the size threshold.
+pub(crate) fn flag_large_file(
+    filename: &str,
+    line_count: usize,
+    threshold: usize,
+) -> Option<ThresholdViolation> {
+    if line_count > threshold {
+        Some(ThresholdViolation {
+            name: filename.to_string(),
+            value: line_count,
+            threshold,
+            kind: ViolationKind::LargeFile,
+        })
+    } else {
+        None
+    }
+}
+
 /// Information about a single function extracted from the AST.
 #[derive(Debug, Clone)]
 pub(crate) struct FunctionInfo {
@@ -663,5 +726,55 @@ fn world() {
     fn extract_returns_none_for_unsupported() {
         let result = extract_functions("SELECT 1;", Language::SQL);
         assert!(result.is_none());
+    }
+
+    // --- Threshold flagging tests ---
+
+    #[test]
+    fn flags_large_function() {
+        let functions = vec![
+            FunctionInfo {
+                name: "small".to_string(),
+                line_count: 10,
+                cyclomatic: 1,
+                cognitive: 0,
+            },
+            FunctionInfo {
+                name: "big".to_string(),
+                line_count: 60,
+                cyclomatic: 5,
+                cognitive: 10,
+            },
+        ];
+        let violations = flag_large_functions(&functions, 50);
+        assert_eq!(violations.len(), 1);
+        assert_eq!(violations[0].name, "big");
+        assert_eq!(violations[0].value, 60);
+    }
+
+    #[test]
+    fn no_violations_when_under_threshold() {
+        let functions = vec![FunctionInfo {
+            name: "ok".to_string(),
+            line_count: 30,
+            cyclomatic: 2,
+            cognitive: 1,
+        }];
+        let violations = flag_large_functions(&functions, 50);
+        assert!(violations.is_empty());
+    }
+
+    #[test]
+    fn flags_large_file() {
+        let v = flag_large_file("big.rs", 600, 500);
+        assert!(v.is_some());
+        let v = v.unwrap();
+        assert_eq!(v.value, 600);
+    }
+
+    #[test]
+    fn no_flag_for_small_file() {
+        let v = flag_large_file("small.rs", 100, 500);
+        assert!(v.is_none());
     }
 }
