@@ -53,7 +53,7 @@ Hotspots correctly identify the most complex code. All 10 bundled grammars work.
 
 - [x] Dependency manifest parser (package.json, Cargo.toml, requirements.txt, go.mod, etc.)
 - [x] Direct dependency counting per manifest
-- [ ] Lock file parsing for transitive dependency counts
+- [x] Lock file parsing for transitive dependency counts
 - [ ] Import/require/use statement parsing for internal dependency graph
 - [ ] Fan-in / fan-out calculation per module
 - [ ] Dependencies section in dashboard

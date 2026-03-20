@@ -71,18 +71,142 @@ pub(crate) struct DependencySummary {
     pub(crate) manifests: Vec<ManifestInfo>,
     /// Total direct dependencies across all manifests.
     pub(crate) total_direct: usize,
+    /// Transitive dependency count (from lock files, if available).
+    pub(crate) total_transitive: Option<usize>,
 }
+
+/// Known lock file names.
+const LOCK_FILE_NAMES: &[&str] = &[
+    "Cargo.lock",
+    "package-lock.json",
+    "yarn.lock",
+    "pnpm-lock.yaml",
+    "poetry.lock",
+    "Pipfile.lock",
+    "go.sum",
+    "Gemfile.lock",
+];
 
 /// Scan a directory for manifests and summarize dependency counts.
 pub(crate) fn summarize_dependencies(dir: &Path) -> DependencySummary {
     let paths = find_manifests(dir);
     let manifests: Vec<ManifestInfo> = paths.iter().filter_map(|p| parse_manifest(p)).collect();
     let total_direct = manifests.iter().map(|m| m.direct_deps.len()).sum();
+    let total_transitive = count_transitive_deps(dir);
 
     DependencySummary {
         manifests,
         total_direct,
+        total_transitive,
     }
+}
+
+/// Count transitive dependencies from lock files in the directory.
+fn count_transitive_deps(dir: &Path) -> Option<usize> {
+    let mut total = 0;
+    let mut found_any = false;
+
+    for name in LOCK_FILE_NAMES {
+        let path = dir.join(name);
+        if path.exists() {
+            if let Some(count) = count_lock_file_entries(&path, name) {
+                total += count;
+                found_any = true;
+            }
+        }
+    }
+
+    if found_any { Some(total) } else { None }
+}
+
+/// Count entries in a specific lock file.
+fn count_lock_file_entries(path: &Path, name: &str) -> Option<usize> {
+    let content = std::fs::read_to_string(path).ok()?;
+
+    match name {
+        "Cargo.lock" => Some(count_cargo_lock(&content)),
+        "package-lock.json" => Some(count_package_lock(&content)),
+        "yarn.lock" => Some(count_yarn_lock(&content)),
+        "go.sum" => Some(count_go_sum(&content)),
+        "Gemfile.lock" => Some(count_gemfile_lock(&content)),
+        "poetry.lock" => Some(count_poetry_lock(&content)),
+        _ => None,
+    }
+}
+
+/// Count packages in Cargo.lock (each [[package]] block).
+fn count_cargo_lock(content: &str) -> usize {
+    content
+        .lines()
+        .filter(|l| l.trim() == "[[package]]")
+        .count()
+}
+
+/// Count packages in package-lock.json (keys in "packages" object).
+fn count_package_lock(content: &str) -> usize {
+    let Ok(value) = serde_json::from_str::<serde_json::Value>(content) else {
+        return 0;
+    };
+    // v3 format uses "packages", v1/v2 uses "dependencies"
+    if let Some(pkgs) = value.get("packages").and_then(|v| v.as_object()) {
+        pkgs.len().saturating_sub(1) // subtract root ""
+    } else if let Some(deps) = value.get("dependencies").and_then(|v| v.as_object()) {
+        deps.len()
+    } else {
+        0
+    }
+}
+
+/// Count packages in yarn.lock (each unindented line with @ or quotes).
+fn count_yarn_lock(content: &str) -> usize {
+    content
+        .lines()
+        .filter(|l| {
+            !l.is_empty()
+                && !l.starts_with(' ')
+                && !l.starts_with('#')
+                && !l.starts_with("__metadata")
+        })
+        .count()
+}
+
+/// Count unique modules in go.sum (each unique module path).
+fn count_go_sum(content: &str) -> usize {
+    let modules: std::collections::HashSet<&str> = content
+        .lines()
+        .filter_map(|l| l.split_whitespace().next())
+        .collect();
+    modules.len()
+}
+
+/// Count gems in Gemfile.lock (specs section entries).
+fn count_gemfile_lock(content: &str) -> usize {
+    let mut in_specs = false;
+    let mut count = 0;
+
+    for line in content.lines() {
+        if line.trim() == "specs:" {
+            in_specs = true;
+            continue;
+        }
+        if in_specs {
+            if line.starts_with("    ") && !line.starts_with("      ") {
+                count += 1;
+            } else if !line.starts_with(' ') {
+                in_specs = false;
+            }
+        }
+    }
+
+    count
+}
+
+/// Count packages in poetry.lock (each [[package]] block).
+fn count_poetry_lock(content: &str) -> usize {
+    content
+        .lines()
+        .filter(|l| l.trim() == "[[package]]")
+        .count()
 }
 
 /// Find manifest files in a directory, skipping excluded directories.
@@ -488,5 +612,28 @@ tempfile = "3"
         let summary = summarize_dependencies(dir.path());
         assert_eq!(summary.manifests.len(), 2);
         assert_eq!(summary.total_direct, 4); // 2 cargo + 2 npm
+    }
+
+    #[test]
+    fn counts_cargo_lock_packages() {
+        let dir = TempDir::new().unwrap();
+        fs::write(
+            dir.path().join("Cargo.lock"),
+            "[[package]]\nname = \"a\"\n\n[[package]]\nname = \"b\"\n\n[[package]]\nname = \"c\"\n",
+        )
+        .unwrap();
+        fs::write(dir.path().join("Cargo.toml"), "[dependencies]\na = \"1\"\n").unwrap();
+
+        let summary = summarize_dependencies(dir.path());
+        assert_eq!(summary.total_transitive, Some(3));
+    }
+
+    #[test]
+    fn transitive_none_without_lock_file() {
+        let dir = TempDir::new().unwrap();
+        fs::write(dir.path().join("Cargo.toml"), "[dependencies]\na = \"1\"\n").unwrap();
+
+        let summary = summarize_dependencies(dir.path());
+        assert!(summary.total_transitive.is_none());
     }
 }
