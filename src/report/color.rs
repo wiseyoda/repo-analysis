@@ -8,6 +8,7 @@ const BOLD: &str = "\x1b[1m";
 const GREEN: &str = "\x1b[32m";
 const RED: &str = "\x1b[31m";
 const CYAN: &str = "\x1b[36m";
+const YELLOW: &str = "\x1b[33m";
 const DIM: &str = "\x1b[2m";
 
 /// Check if color output is enabled.
@@ -84,6 +85,15 @@ impl<'a> ColorWriter<'a> {
     pub(crate) fn dim(&mut self, text: &str) -> io::Result<()> {
         if self.color {
             write!(self.inner, "{DIM}{text}{RESET}")
+        } else {
+            write!(self.inner, "{text}")
+        }
+    }
+
+    /// Write warning text in yellow.
+    pub(crate) fn warn(&mut self, text: &str) -> io::Result<()> {
+        if self.color {
+            write!(self.inner, "{YELLOW}{text}{RESET}")
         } else {
             write!(self.inner, "{text}")
         }

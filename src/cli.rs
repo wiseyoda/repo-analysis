@@ -25,6 +25,14 @@ pub(crate) struct Args {
     /// Generate a Markdown report file.
     #[arg(long, short)]
     pub(crate) markdown: bool,
+
+    /// Show per-phase timing on stderr.
+    #[arg(long, short)]
+    pub(crate) verbose: bool,
+
+    /// Generate an HTML report file in the target directory.
+    #[arg(long)]
+    pub(crate) html: bool,
 }
 
 /// Available subcommands.
@@ -44,6 +52,19 @@ pub(crate) enum Command {
     },
     /// Generate a man page.
     Manpage,
+    /// Initialize a .repostat.toml config file with defaults.
+    Init {
+        /// Overwrite existing config file.
+        #[arg(long)]
+        force: bool,
+    },
+    /// Analyze only files changed since a revision.
+    Diff {
+        /// Git revision spec (e.g., HEAD~5).
+        revspec: String,
+        /// Path to the repository [default: current directory].
+        path: Option<PathBuf>,
+    },
 }
 
 /// Parsed and validated CLI arguments.
@@ -58,6 +79,21 @@ pub(crate) enum ValidatedCommand {
     Completions(Shell),
     /// Generate man page.
     Manpage,
+    /// Initialize config file.
+    Init {
+        /// Whether to overwrite existing config.
+        force: bool,
+    },
+    /// Analyze changed files since a revision.
+    Diff(DiffArgs),
+}
+
+/// Arguments for the diff subcommand.
+pub(crate) struct DiffArgs {
+    /// Git revision spec.
+    pub(crate) revspec: String,
+    /// Validated target directory path.
+    pub(crate) path: PathBuf,
 }
 
 /// Arguments for the analyze (default) subcommand.
@@ -68,6 +104,10 @@ pub(crate) struct AnalyzeArgs {
     pub(crate) json: bool,
     /// Whether to output Markdown.
     pub(crate) markdown: bool,
+    /// Whether to show per-phase timing.
+    pub(crate) verbose: bool,
+    /// Whether to generate HTML output.
+    pub(crate) html: bool,
 }
 
 /// Arguments for the trend subcommand.
@@ -88,12 +128,19 @@ pub(crate) fn parse_and_validate() -> anyhow::Result<ValidatedCommand> {
         Some(Command::List) => Ok(ValidatedCommand::List),
         Some(Command::Completions { shell }) => Ok(ValidatedCommand::Completions(shell)),
         Some(Command::Manpage) => Ok(ValidatedCommand::Manpage),
+        Some(Command::Init { force }) => Ok(ValidatedCommand::Init { force }),
+        Some(Command::Diff { revspec, path }) => {
+            let path = resolve_path(path)?;
+            Ok(ValidatedCommand::Diff(DiffArgs { revspec, path }))
+        }
         None => {
             let path = resolve_path(args.path)?;
             Ok(ValidatedCommand::Analyze(AnalyzeArgs {
                 path,
                 json: args.json,
                 markdown: args.markdown,
+                verbose: args.verbose,
+                html: args.html,
             }))
         }
     }

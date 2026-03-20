@@ -9,6 +9,35 @@ use std::collections::BTreeMap;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
+use crate::metrics::aggregate::AggregateMetrics;
+use crate::metrics::complexity::FunctionInfo;
+use crate::metrics::dependencies::DependencySummary;
+use crate::metrics::documentation::DocumentationMetrics;
+use crate::metrics::risk::RiskEntry;
+
+/// Collected outputs from all analysis passes.
+///
+/// Built incrementally in `main.rs` as each analysis phase completes,
+/// then passed to `Snapshot::from_analysis()` for persistence.
+pub(crate) struct AnalysisResult {
+    /// Aggregate line/file metrics.
+    pub(crate) agg: AggregateMetrics,
+    /// Git SHA at time of analysis.
+    pub(crate) git_sha: Option<String>,
+    /// Complexity hotspots: (relative path, function info).
+    pub(crate) hotspots: Vec<(String, FunctionInfo)>,
+    /// External dependency summary.
+    pub(crate) dep_summary: DependencySummary,
+    /// Documentation metrics (None if not computed).
+    pub(crate) doc_metrics: Option<DocumentationMetrics>,
+    /// AI analysis results (None if Claude CLI unavailable).
+    pub(crate) ai_result: Option<crate::ai::schema::AiAnalysisResult>,
+    /// Number of files skipped due to read errors.
+    pub(crate) skipped_files: usize,
+    /// Per-file risk entries (churn * complexity).
+    pub(crate) risk_entries: Vec<RiskEntry>,
+}
+
 /// A point-in-time snapshot of repository metrics.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct Snapshot {
@@ -34,6 +63,26 @@ pub(crate) struct Snapshot {
     /// AI analysis results.
     #[serde(default)]
     pub(crate) ai_analysis: Option<crate::ai::schema::AiAnalysisResult>,
+    /// Number of files skipped due to read errors.
+    #[serde(default)]
+    pub(crate) skipped_files: usize,
+    /// Per-file risk data (raw inputs: churn + complexity).
+    #[serde(default)]
+    pub(crate) risk_hotspots: Vec<SnapshotRiskEntry>,
+}
+
+/// Per-file risk data stored in a snapshot.
+///
+/// Stores raw inputs (churn_count, max_complexity) rather than computed
+/// scores so the formula can change without invalidating history.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub(crate) struct SnapshotRiskEntry {
+    /// File path (relative to repo root).
+    pub(crate) file: String,
+    /// Number of commits in the last 6 months.
+    pub(crate) churn_count: usize,
+    /// Maximum cyclomatic complexity of any function.
+    pub(crate) max_complexity: usize,
 }
 
 /// Dependency data stored in a snapshot.
@@ -118,6 +167,7 @@ pub(crate) struct SnapshotLanguageEntry {
 
 impl Snapshot {
     /// Build a snapshot from aggregate metrics, hotspots, dependency, doc, and AI data.
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn from_aggregate(
         agg: &crate::metrics::aggregate::AggregateMetrics,
         git_sha: Option<String>,
@@ -125,6 +175,7 @@ impl Snapshot {
         dep_summary: &crate::metrics::dependencies::DependencySummary,
         doc_metrics: Option<&crate::metrics::documentation::DocumentationMetrics>,
         ai_result: Option<&crate::ai::schema::AiAnalysisResult>,
+        skipped_files: usize,
     ) -> Self {
         let mut by_language = BTreeMap::new();
         for (lang, metrics) in &agg.by_language {
@@ -207,7 +258,32 @@ impl Snapshot {
             dependencies,
             documentation,
             ai_analysis: ai_result.cloned(),
+            skipped_files,
+            risk_hotspots: vec![],
         }
+    }
+
+    /// Build a snapshot from an `AnalysisResult`.
+    pub(crate) fn from_analysis(result: &AnalysisResult) -> Self {
+        let mut snap = Self::from_aggregate(
+            &result.agg,
+            result.git_sha.clone(),
+            &result.hotspots,
+            &result.dep_summary,
+            result.doc_metrics.as_ref(),
+            result.ai_result.as_ref(),
+            result.skipped_files,
+        );
+        snap.risk_hotspots = result
+            .risk_entries
+            .iter()
+            .map(|r| SnapshotRiskEntry {
+                file: r.file.clone(),
+                churn_count: r.churn_count,
+                max_complexity: r.max_complexity,
+            })
+            .collect();
+        snap
     }
 }
 
@@ -279,12 +355,60 @@ mod tests {
             &dep_default,
             None,
             None,
+            2,
         );
         assert_eq!(snap.total_files, 3);
         assert_eq!(snap.total_lines.code, 80);
         assert_eq!(snap.git_sha, Some("abc123".to_string()));
         assert!(snap.by_language.contains_key("Rust"));
         assert_eq!(snap.by_language["Rust"].files, 3);
+        assert_eq!(snap.skipped_files, 2);
+    }
+
+    #[test]
+    fn snapshot_from_analysis_result() {
+        let mut by_language = BTreeMap::new();
+        by_language.insert(
+            Language::Rust,
+            LanguageMetrics {
+                file_count: 5,
+                lines: LineMetrics {
+                    total_lines: 200,
+                    code_lines: 160,
+                    blank_lines: 20,
+                    comment_lines: 20,
+                },
+            },
+        );
+
+        let agg = AggregateMetrics {
+            total_files: 5,
+            total_lines: LineMetrics {
+                total_lines: 200,
+                code_lines: 160,
+                blank_lines: 20,
+                comment_lines: 20,
+            },
+            by_language,
+            unknown_language: LanguageMetrics::default(),
+        };
+
+        let result = AnalysisResult {
+            agg,
+            git_sha: Some("def456".to_string()),
+            hotspots: vec![],
+            dep_summary: crate::metrics::dependencies::DependencySummary::default(),
+            doc_metrics: None,
+            ai_result: None,
+            skipped_files: 1,
+            risk_entries: vec![],
+        };
+
+        let snap = Snapshot::from_analysis(&result);
+        assert_eq!(snap.total_files, 5);
+        assert_eq!(snap.total_lines.code, 160);
+        assert_eq!(snap.git_sha, Some("def456".to_string()));
+        assert_eq!(snap.skipped_files, 1);
     }
 
     #[test]
@@ -318,6 +442,8 @@ mod tests {
             dependencies: None,
             documentation: None,
             ai_analysis: None,
+            skipped_files: 0,
+            risk_hotspots: vec![],
         };
 
         let json = serde_json::to_string_pretty(&snap).unwrap();

@@ -2,5 +2,6 @@
 
 pub(crate) mod color;
 pub(crate) mod dashboard;
+pub(crate) mod html;
 pub(crate) mod markdown;
 pub(crate) mod trend;

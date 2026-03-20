@@ -1,7 +1,7 @@
 //! Git log integration: commit frequency, contributors, and lines changed.
 
 use std::collections::BTreeMap;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use chrono::Datelike;
@@ -172,6 +172,64 @@ fn iso_week_from_date(date_str: &str) -> Option<String> {
     Some(format!("{}-W{:02}", iso_week.year(), iso_week.week()))
 }
 
+/// Get file paths changed between a revision and HEAD.
+///
+/// Runs `git diff --name-only <revspec>..HEAD` and returns the paths.
+/// Returns an error message if git fails.
+pub(crate) fn changed_files(dir: &Path, revspec: &str) -> Result<Vec<PathBuf>, String> {
+    let output = Command::new("git")
+        .args(["diff", "--name-only", &format!("{revspec}..HEAD")])
+        .current_dir(dir)
+        .output()
+        .map_err(|e| format!("failed to run git: {e}"))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("git diff failed: {}", stderr.trim()));
+    }
+
+    let text = String::from_utf8_lossy(&output.stdout);
+    let paths: Vec<PathBuf> = text
+        .lines()
+        .filter(|l| !l.trim().is_empty())
+        .map(|l| dir.join(l.trim()))
+        .collect();
+
+    Ok(paths)
+}
+
+/// Collect per-file commit counts over the last 6 months.
+///
+/// Returns a map of file path → number of commits touching that file.
+/// Returns `None` if git is unavailable or directory is not a git repo.
+pub(crate) fn collect_file_churn(dir: &Path) -> Option<BTreeMap<PathBuf, usize>> {
+    let output = Command::new("git")
+        .args(["log", "--format=", "--name-only", "--since=6 months ago"])
+        .current_dir(dir)
+        .output()
+        .ok()?;
+
+    if !output.status.success() {
+        return None;
+    }
+
+    let text = String::from_utf8_lossy(&output.stdout);
+    Some(parse_file_churn_output(&text))
+}
+
+/// Parse git log --name-only output into file → commit count map.
+fn parse_file_churn_output(output: &str) -> BTreeMap<PathBuf, usize> {
+    let mut counts: BTreeMap<PathBuf, usize> = BTreeMap::new();
+    for line in output.lines() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+        *counts.entry(PathBuf::from(trimmed)).or_insert(0) += 1;
+    }
+    counts
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -212,5 +270,41 @@ mod tests {
         let dir = tempfile::TempDir::new().unwrap();
         let history = collect_git_history(dir.path());
         assert!(history.is_none());
+    }
+
+    #[test]
+    fn collect_file_churn_works_in_git_repo() {
+        let churn = collect_file_churn(Path::new("."));
+        assert!(churn.is_some(), "should return Some in a git repo");
+        let map = churn.unwrap();
+        // This repo has files that were committed — map should not be empty
+        assert!(!map.is_empty(), "churn map should contain entries");
+        // All counts should be > 0
+        for (_, count) in &map {
+            assert!(*count > 0, "churn count should be positive");
+        }
+    }
+
+    #[test]
+    fn collect_file_churn_returns_none_for_non_git() {
+        let dir = tempfile::TempDir::new().unwrap();
+        let churn = collect_file_churn(dir.path());
+        assert!(churn.is_none());
+    }
+
+    #[test]
+    fn parse_file_churn_output_counts_files() {
+        let output = "src/main.rs\n\nsrc/lib.rs\n\nsrc/main.rs\n\nsrc/lib.rs\n\nsrc/main.rs\n";
+        let map = parse_file_churn_output(output);
+        assert_eq!(map.len(), 2);
+        assert_eq!(map[&PathBuf::from("src/main.rs")], 3);
+        assert_eq!(map[&PathBuf::from("src/lib.rs")], 2);
+    }
+
+    #[test]
+    fn parse_file_churn_output_skips_blanks() {
+        let output = "\n\n\n";
+        let map = parse_file_churn_output(output);
+        assert!(map.is_empty());
     }
 }

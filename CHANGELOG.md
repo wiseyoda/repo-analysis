@@ -7,6 +7,36 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-03-20
+
+### Added
+- **Risk scoring**: per-file risk scores combining git churn and cyclomatic complexity — find your riskiest code
+- **Parallel AI analysis**: 6 Claude CLI skills now run concurrently (~60s → ~15s)
+- **Health exit codes**: exit 0 (healthy), 10 (warning), 20 (critical) for zero-config CI integration
+- **`repostat init`**: generate a commented `.repostat.toml` config file with `--force` for overwrites
+- **`repostat diff HEAD~N`**: analyze only files changed in recent commits
+- **`--html` flag**: self-contained HTML report with SVG bar charts, no JavaScript
+- **`--verbose` flag**: per-phase timing on stderr (scanner, metrics, AI, report)
+- **`REPOSTAT_SKIP_AI` env var**: skip AI analysis for fast runs and CI
+- Health thresholds configurable via `[health]` section in `.repostat.toml`
+- Risk hotspots section in terminal dashboard, markdown, and JSON output
+- Risk data persisted in snapshots as raw inputs (churn_count, max_complexity)
+
+### Fixed
+- File read errors now logged to stderr with count instead of silently dropped
+- Corrupt snapshot files produce friendly warnings instead of cryptic errors
+- Index write failures now warn instead of being silently ignored
+- Zero files after filtering now shows a helpful warning message
+- Claude CLI timeout extended from 60s to 180s with process kill on timeout
+- Integration tests now run in 0.7s (was 222s) via REPOSTAT_SKIP_AI
+- Version mismatch between Cargo.toml and VERSION file resolved
+
+### Changed
+- `Snapshot::from_aggregate` replaced with `AnalysisResult` builder struct
+- AI module test coverage expanded to 30 tests
+- Report module test coverage expanded to 30 tests
+- Total test count: 251 (236 unit + 15 integration)
+
 ## [0.8.0] - 2026-03-20
 
 ### Added

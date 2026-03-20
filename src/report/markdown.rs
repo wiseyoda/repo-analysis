@@ -3,18 +3,40 @@
 use std::io::{self, Write};
 
 use crate::metrics::aggregate::AggregateMetrics;
+use crate::metrics::risk::RiskEntry;
 use crate::snapshot::diff::SnapshotDiff;
 
 /// Render a Markdown report to a writer.
 pub(crate) fn render(
     agg: &AggregateMetrics,
     diff: Option<&SnapshotDiff>,
+    risk_entries: &[RiskEntry],
     writer: &mut dyn Write,
 ) -> io::Result<()> {
     writeln!(writer, "# Repository Analysis")?;
     writeln!(writer)?;
     render_summary(agg, diff, writer)?;
     render_language_table(agg, writer)?;
+    if !risk_entries.is_empty() {
+        render_risk_table(risk_entries, writer)?;
+    }
+    Ok(())
+}
+
+/// Render risk hotspots as a markdown table.
+fn render_risk_table(entries: &[RiskEntry], w: &mut dyn Write) -> io::Result<()> {
+    writeln!(w, "## Risk Hotspots")?;
+    writeln!(w)?;
+    writeln!(w, "| File | Risk | Churn | Complexity |")?;
+    writeln!(w, "|------|-----:|------:|-----------:|")?;
+    for entry in entries.iter().take(10) {
+        writeln!(
+            w,
+            "| {} | {} | {} | {} |",
+            entry.file, entry.risk_score, entry.churn_count, entry.max_complexity,
+        )?;
+    }
+    writeln!(w)?;
     Ok(())
 }
 
@@ -123,7 +145,7 @@ mod tests {
     fn renders_markdown_with_header() {
         let agg = make_agg();
         let mut buf = Vec::new();
-        render(&agg, None, &mut buf).unwrap();
+        render(&agg, None, &[], &mut buf).unwrap();
         let output = String::from_utf8(buf).unwrap();
         assert!(output.starts_with("# Repository Analysis"));
     }
@@ -132,10 +154,54 @@ mod tests {
     fn renders_language_table() {
         let agg = make_agg();
         let mut buf = Vec::new();
-        render(&agg, None, &mut buf).unwrap();
+        render(&agg, None, &[], &mut buf).unwrap();
         let output = String::from_utf8(buf).unwrap();
         assert!(output.contains("| Language | Files | Code | % |"));
         assert!(output.contains("Rust"));
+    }
+
+    #[test]
+    fn renders_summary_section() {
+        let agg = make_agg();
+        let mut buf = Vec::new();
+        render(&agg, None, &[], &mut buf).expect("render failed");
+        let output = String::from_utf8(buf).expect("invalid utf8");
+        assert!(output.contains("## Summary"));
+        assert!(output.contains("**Files:** 5"));
+        assert!(output.contains("**Code:** 150"));
+        assert!(output.contains("**Blank:** 30"));
+        assert!(output.contains("**Comment:** 20"));
+    }
+
+    #[test]
+    fn renders_without_diff_no_deltas() {
+        let agg = make_agg();
+        let mut buf = Vec::new();
+        render(&agg, None, &[], &mut buf).expect("render failed");
+        let output = String::from_utf8(buf).expect("invalid utf8");
+        assert!(
+            !output.contains("(+"),
+            "should not contain delta markers without diff"
+        );
+    }
+
+    #[test]
+    fn renders_negative_diff_deltas() {
+        let agg = make_agg();
+        let diff = SnapshotDiff {
+            files_delta: -2,
+            lines_delta: crate::snapshot::diff::LinesDelta {
+                total: -10,
+                code: -8,
+                blank: -1,
+                comment: -1,
+            },
+        };
+        let mut buf = Vec::new();
+        render(&agg, Some(&diff), &[], &mut buf).expect("render failed");
+        let output = String::from_utf8(buf).expect("invalid utf8");
+        assert!(output.contains("(-2)"));
+        assert!(output.contains("(-10)"));
     }
 
     #[test]
@@ -151,7 +217,7 @@ mod tests {
             },
         };
         let mut buf = Vec::new();
-        render(&agg, Some(&diff), &mut buf).unwrap();
+        render(&agg, Some(&diff), &[], &mut buf).unwrap();
         let output = String::from_utf8(buf).unwrap();
         assert!(output.contains("(+1)"));
         assert!(output.contains("(+20)"));

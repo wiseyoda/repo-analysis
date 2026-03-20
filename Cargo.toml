@@ -1,6 +1,6 @@
 [package]
 name = "repostat"
-version = "0.7.0"
+version = "0.9.0"
 edition = "2024"
 rust-version = "1.85"
 description = "Analyze repository complexity, track coding progress, produce AI-augmented reports"

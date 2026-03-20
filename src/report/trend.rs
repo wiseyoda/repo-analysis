@@ -140,4 +140,30 @@ mod tests {
         assert_eq!(format_number(12345), "12,345");
         assert_eq!(format_number(1234567), "1,234,567");
     }
+
+    #[test]
+    fn sparkline_descending_values() {
+        let spark = sparkline(&[8, 6, 4, 2]);
+        assert_eq!(spark, "█▅▃▁");
+    }
+
+    #[test]
+    fn sparkline_with_zero_range() {
+        let spark = sparkline(&[0, 0, 0]);
+        assert_eq!(spark, "▁▁▁");
+    }
+
+    #[test]
+    fn format_number_zero() {
+        assert_eq!(format_number(0), "0");
+    }
+
+    #[test]
+    fn render_with_empty_snapshots() {
+        let mut buf = Vec::new();
+        // Empty slice should not panic
+        render(&[], &mut buf, false).expect("render of empty snapshots failed");
+        let output = String::from_utf8(buf).expect("invalid utf8");
+        assert!(output.contains("0 snapshots"));
+    }
 }

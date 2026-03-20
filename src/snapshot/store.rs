@@ -32,15 +32,6 @@ pub(crate) enum SnapshotError {
         /// Underlying I/O error.
         source: std::io::Error,
     },
-
-    /// Failed to parse a snapshot file.
-    #[error("failed to parse snapshot from {path}: {source}")]
-    ParseFailed {
-        /// Path we tried to parse.
-        path: PathBuf,
-        /// Underlying JSON error.
-        source: serde_json::Error,
-    },
 }
 
 /// Directory name for snapshots inside the target repo.
@@ -97,13 +88,17 @@ pub(crate) fn load_latest(target_dir: &Path) -> Result<Option<Snapshot>, Snapsho
         source: e,
     })?;
 
-    let snapshot: Snapshot =
-        serde_json::from_str(&content).map_err(|e| SnapshotError::ParseFailed {
-            path: latest.clone(),
-            source: e,
-        })?;
-
-    Ok(Some(snapshot))
+    match serde_json::from_str::<Snapshot>(&content) {
+        Ok(snapshot) => Ok(Some(snapshot)),
+        Err(e) => {
+            let name = latest
+                .file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or("unknown");
+            eprintln!("warning: corrupt snapshot {name}, skipping diff: {e}");
+            Ok(None)
+        }
+    }
 }
 
 /// Load all snapshots from `.repostat/snapshots/`, sorted by timestamp ascending.
@@ -170,6 +165,7 @@ mod tests {
             &crate::metrics::dependencies::DependencySummary::default(),
             None,
             None,
+            0,
         )
     }
 
@@ -197,6 +193,21 @@ mod tests {
         let loaded = load_latest(dir.path()).unwrap().unwrap();
         assert_eq!(loaded.total_files, 1);
         assert_eq!(loaded.total_lines.code, 8);
+    }
+
+    #[test]
+    fn load_latest_returns_none_for_corrupt_json() {
+        let dir = TempDir::new().unwrap();
+        let snap_dir = dir.path().join(".repostat/snapshots");
+        std::fs::create_dir_all(&snap_dir).unwrap();
+        std::fs::write(snap_dir.join("20260320-120000.json"), "not valid json {{{").unwrap();
+        let result = load_latest(dir.path());
+        // Should return Ok(None), not Err — corrupt file is handled gracefully
+        assert!(result.is_ok(), "corrupt snapshot should not return Err");
+        assert!(
+            result.unwrap().is_none(),
+            "corrupt snapshot should return None"
+        );
     }
 
     #[test]
