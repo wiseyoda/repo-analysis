@@ -5,7 +5,7 @@ description: |
   Pre-commit code review against project standards. Fix-first: auto-fixes mechanical
   issues, asks about judgment calls. Use before committing or when asked to "review",
   "check my code", or "audit". For post-commit PR review, run on a feature branch.
-disable-model-invocation: true
+disable-model-invocation: false
 user-invocable: true
 allowed-tools:
   - Read

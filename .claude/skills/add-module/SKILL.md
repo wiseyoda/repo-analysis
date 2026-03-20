@@ -5,7 +5,7 @@ description: |
   Scaffold a new module following project structure conventions from tech-stack.md.
   Creates files, wires up mod.rs, adds test scaffolding. Use when asked to "create
   a module", "scaffold", or "add a new module".
-disable-model-invocation: true
+disable-model-invocation: false
 user-invocable: true
 allowed-tools:
   - Read

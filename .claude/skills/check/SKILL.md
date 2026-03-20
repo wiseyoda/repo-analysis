@@ -4,7 +4,7 @@ version: 1.0.0
 description: |
   Quick pass/fail quality gate — fmt, clippy, test in one command. Returns a
   one-screen summary. For detailed analysis, use /test instead.
-disable-model-invocation: true
+disable-model-invocation: false
 user-invocable: true
 allowed-tools:
   - Bash(cargo *)

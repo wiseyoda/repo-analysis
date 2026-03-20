@@ -5,7 +5,7 @@ description: |
   Analyze project architecture against docs/tech-stack.md. Produces a health
   score, dependency map, conformance report, and identifies structural drift.
   Use when asked to "analyze architecture", "check structure", or "audit deps".
-disable-model-invocation: true
+disable-model-invocation: false
 user-invocable: true
 context: fork
 allowed-tools:

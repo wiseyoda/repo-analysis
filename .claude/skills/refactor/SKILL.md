@@ -5,7 +5,7 @@ description: |
   Refactor code while preserving all behavior. Tests must pass after every change.
   Includes self-regulation to stop before making things worse. Use when asked to
   "refactor", "clean up", "simplify", or "restructure".
-disable-model-invocation: true
+disable-model-invocation: false
 user-invocable: true
 allowed-tools:
   - Read

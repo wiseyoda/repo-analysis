@@ -5,7 +5,7 @@ description: |
   Run the full quality gate for repostat: fmt, clippy, test. Shows structured
   pass/fail results. Use when asked to "test", "check tests", or "run the suite".
   For quick pass/fail only, use /check instead.
-disable-model-invocation: true
+disable-model-invocation: false
 user-invocable: true
 allowed-tools:
   - Bash(cargo *)

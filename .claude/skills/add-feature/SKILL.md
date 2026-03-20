@@ -5,7 +5,7 @@ description: |
   Add a new feature using the full TDD + SDD workflow. Creates spec, writes
   failing tests, implements, refactors, and verifies. Use when asked to
   "add", "implement", "build", or "create" a feature.
-disable-model-invocation: true
+disable-model-invocation: false
 user-invocable: true
 allowed-tools:
   - Read
