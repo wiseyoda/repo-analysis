@@ -143,7 +143,7 @@ README is complete. The tool can analyze its own codebase.
 See `docs/designs/phase-9-health-check.md` for full design.
 
 - [x] Bug fixes: silent file read errors (log + count skipped files)
-- [ ] Bug fixes: AnalysisResult builder struct (replace 6-param from_aggregate)
+- [x] Bug fixes: AnalysisResult builder struct (replace 6-param from_aggregate)
 - [ ] Bug fixes: corrupt snapshot friendly error + silent index write warning
 - [ ] Bug fixes: warn when 0 files analyzed after filtering
 - [ ] Bug fixes: integration test speed (REPOSTAT_SKIP_AI env var)

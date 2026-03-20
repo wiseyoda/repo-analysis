@@ -113,17 +113,19 @@ fn run_analyze(args: &cli::AnalyzeArgs) {
 
     let ai_result = ai::run_ai_analysis(&args.path);
 
+    let analysis = snapshot::AnalysisResult {
+        agg,
+        git_sha: snapshot::current_git_sha(),
+        hotspots,
+        dep_summary,
+        doc_metrics: Some(doc_metrics),
+        ai_result,
+        skipped_files,
+    };
+
     let previous = snapshot::store::load_latest(&args.path).ok().flatten();
 
-    let snap = snapshot::Snapshot::from_aggregate(
-        &agg,
-        snapshot::current_git_sha(),
-        &hotspots,
-        &dep_summary,
-        Some(&doc_metrics),
-        ai_result.as_ref(),
-        skipped_files,
-    );
+    let snap = snapshot::Snapshot::from_analysis(&analysis);
     if let Err(e) = snapshot::store::write_snapshot(&args.path, &snap) {
         eprintln!("warning: failed to write snapshot: {e}");
     }
@@ -143,7 +145,7 @@ fn run_analyze(args: &cli::AnalyzeArgs) {
         }
     } else if args.markdown {
         let mut stdout = std::io::stdout().lock();
-        if let Err(e) = report::markdown::render(&agg, diff.as_ref(), &mut stdout) {
+        if let Err(e) = report::markdown::render(&analysis.agg, diff.as_ref(), &mut stdout) {
             eprintln!("error: failed to render markdown: {e}");
             process::exit(2);
         }
@@ -157,15 +159,15 @@ fn run_analyze(args: &cli::AnalyzeArgs) {
         let history_files: Vec<usize> = all_snapshots.iter().map(|s| s.total_files).collect();
 
         let dashboard_data = report::dashboard::DashboardData {
-            agg: &agg,
+            agg: &analysis.agg,
             diff: diff.as_ref(),
-            hotspots: &hotspots,
-            dep_summary: &dep_summary,
-            doc_metrics: Some(&doc_metrics),
-            ai_result: ai_result.as_ref(),
+            hotspots: &analysis.hotspots,
+            dep_summary: &analysis.dep_summary,
+            doc_metrics: analysis.doc_metrics.as_ref(),
+            ai_result: analysis.ai_result.as_ref(),
             history_lines,
             history_files,
-            skipped_files,
+            skipped_files: analysis.skipped_files,
         };
         if let Err(e) = report::dashboard::render(&dashboard_data, &mut stdout, color) {
             eprintln!("error: failed to render dashboard: {e}");

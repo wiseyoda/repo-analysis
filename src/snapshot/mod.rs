@@ -9,6 +9,32 @@ use std::collections::BTreeMap;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
+use crate::metrics::aggregate::AggregateMetrics;
+use crate::metrics::complexity::FunctionInfo;
+use crate::metrics::dependencies::DependencySummary;
+use crate::metrics::documentation::DocumentationMetrics;
+
+/// Collected outputs from all analysis passes.
+///
+/// Built incrementally in `main.rs` as each analysis phase completes,
+/// then passed to `Snapshot::from_analysis()` for persistence.
+pub(crate) struct AnalysisResult {
+    /// Aggregate line/file metrics.
+    pub(crate) agg: AggregateMetrics,
+    /// Git SHA at time of analysis.
+    pub(crate) git_sha: Option<String>,
+    /// Complexity hotspots: (relative path, function info).
+    pub(crate) hotspots: Vec<(String, FunctionInfo)>,
+    /// External dependency summary.
+    pub(crate) dep_summary: DependencySummary,
+    /// Documentation metrics (None if not computed).
+    pub(crate) doc_metrics: Option<DocumentationMetrics>,
+    /// AI analysis results (None if Claude CLI unavailable).
+    pub(crate) ai_result: Option<crate::ai::schema::AiAnalysisResult>,
+    /// Number of files skipped due to read errors.
+    pub(crate) skipped_files: usize,
+}
+
 /// A point-in-time snapshot of repository metrics.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub(crate) struct Snapshot {
@@ -215,6 +241,19 @@ impl Snapshot {
             skipped_files,
         }
     }
+
+    /// Build a snapshot from an `AnalysisResult`.
+    pub(crate) fn from_analysis(result: &AnalysisResult) -> Self {
+        Self::from_aggregate(
+            &result.agg,
+            result.git_sha.clone(),
+            &result.hotspots,
+            &result.dep_summary,
+            result.doc_metrics.as_ref(),
+            result.ai_result.as_ref(),
+            result.skipped_files,
+        )
+    }
 }
 
 impl SnapshotLineMetrics {
@@ -293,6 +332,51 @@ mod tests {
         assert!(snap.by_language.contains_key("Rust"));
         assert_eq!(snap.by_language["Rust"].files, 3);
         assert_eq!(snap.skipped_files, 2);
+    }
+
+    #[test]
+    fn snapshot_from_analysis_result() {
+        let mut by_language = BTreeMap::new();
+        by_language.insert(
+            Language::Rust,
+            LanguageMetrics {
+                file_count: 5,
+                lines: LineMetrics {
+                    total_lines: 200,
+                    code_lines: 160,
+                    blank_lines: 20,
+                    comment_lines: 20,
+                },
+            },
+        );
+
+        let agg = AggregateMetrics {
+            total_files: 5,
+            total_lines: LineMetrics {
+                total_lines: 200,
+                code_lines: 160,
+                blank_lines: 20,
+                comment_lines: 20,
+            },
+            by_language,
+            unknown_language: LanguageMetrics::default(),
+        };
+
+        let result = AnalysisResult {
+            agg,
+            git_sha: Some("def456".to_string()),
+            hotspots: vec![],
+            dep_summary: crate::metrics::dependencies::DependencySummary::default(),
+            doc_metrics: None,
+            ai_result: None,
+            skipped_files: 1,
+        };
+
+        let snap = Snapshot::from_analysis(&result);
+        assert_eq!(snap.total_files, 5);
+        assert_eq!(snap.total_lines.code, 160);
+        assert_eq!(snap.git_sha, Some("def456".to_string()));
+        assert_eq!(snap.skipped_files, 1);
     }
 
     #[test]
