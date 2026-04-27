@@ -25,6 +25,31 @@ pub(crate) fn detect_cli() -> Option<PathBuf> {
     }
 }
 
+/// Build the argument list for a `claude -p` invocation.
+///
+/// `--strict-mcp-config` prevents the user's globally configured MCP servers
+/// from loading their tool definitions into the spawned session. Without it, a
+/// large MCP set can fill the haiku context before analysis completes,
+/// triggering auto-compaction and replacing the requested JSON with a
+/// "Conversation Summary" prose response.
+///
+/// `--setting-sources user` skips project-level `.claude/settings.json` so
+/// hooks tuned for interactive editing (pre-commit checks, post-edit
+/// formatters, session-start banners) do not run during a one-shot analysis.
+fn build_invoke_args(prompt: &str) -> [&str; 9] {
+    [
+        "-p",
+        prompt,
+        "--output-format",
+        "json",
+        "--model",
+        "haiku",
+        "--strict-mcp-config",
+        "--setting-sources",
+        "user",
+    ]
+}
+
 /// Invoke Claude CLI with a prompt in the given directory.
 ///
 /// Uses `claude -p "<prompt>" --output-format json` to get structured output.
@@ -35,7 +60,7 @@ pub(crate) fn invoke(
     prompt: &str,
 ) -> Result<String, InvokeError> {
     let child = Command::new(cli_path)
-        .args(["-p", prompt, "--output-format", "json", "--model", "haiku"])
+        .args(build_invoke_args(prompt))
         .current_dir(target_dir)
         .stdout(std::process::Stdio::piped())
         .stderr(std::process::Stdio::piped())
@@ -148,6 +173,24 @@ mod tests {
         // This test just verifies the function doesn't panic.
         // Result depends on whether claude is installed.
         let _result = detect_cli();
+    }
+
+    #[test]
+    fn build_invoke_args_isolates_session_from_user_environment() {
+        // Regression: without these flags, a heavy global MCP set or project
+        // hooks fill haiku's context, auto-compaction fires, and the spawned
+        // session returns a "Conversation Summary" instead of the JSON the
+        // skill prompt requested.
+        let args = build_invoke_args("the prompt");
+
+        assert!(args.contains(&"--strict-mcp-config"), "{args:?}");
+        let setting_sources_idx = args
+            .iter()
+            .position(|a| *a == "--setting-sources")
+            .expect("--setting-sources flag present");
+        assert_eq!(args.get(setting_sources_idx + 1), Some(&"user"));
+        assert_eq!(args[0], "-p");
+        assert_eq!(args[1], "the prompt");
     }
 
     #[test]
