@@ -123,8 +123,11 @@ Read [docs/constitution.md](docs/constitution.md) first. Then:
 1. Fork the repo
 2. Create a feature branch
 3. Write tests first (TDD)
-4. Run `cargo fmt && cargo clippy -- -D warnings && cargo test`
+4. Run `scripts/verify.sh`
 5. Open a PR
+
+`scripts/verify.sh` is the repository verification entrypoint. It runs
+`cargo fmt --check`, Clippy with warnings denied, and the complete test suite.
 
 ## License
 
