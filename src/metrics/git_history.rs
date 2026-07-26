@@ -1,6 +1,6 @@
 //! Git log integration: commit frequency, contributors, and lines changed.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -48,9 +48,9 @@ pub(crate) fn collect_git_history(dir: &Path) -> Option<GitHistory> {
 
     // Count total commits (all time)
     let total_commits = count_total_commits(dir);
+    let contributors = collect_contributors(dir)?;
 
-    // Parse recent commits for contributors and weekly breakdown
-    let mut contributors_set = std::collections::BTreeSet::new();
+    // Parse recent commits for weekly breakdown
     let mut week_commits: BTreeMap<String, (usize, usize, usize)> = BTreeMap::new();
 
     for line in log_text.lines() {
@@ -58,10 +58,7 @@ pub(crate) fn collect_git_history(dir: &Path) -> Option<GitHistory> {
         if parts.len() < 2 {
             continue;
         }
-        let email = parts[0].trim();
         let date_str = parts[1].trim();
-
-        contributors_set.insert(email.to_string());
 
         if let Some(week) = iso_week_from_date(date_str) {
             let entry = week_commits.entry(week).or_insert((0, 0, 0));
@@ -90,9 +87,30 @@ pub(crate) fn collect_git_history(dir: &Path) -> Option<GitHistory> {
 
     Some(GitHistory {
         total_commits,
-        contributors: contributors_set.into_iter().collect(),
+        contributors,
         weekly_activity,
     })
+}
+
+/// Collect unique contributor emails across all reachable commits.
+fn collect_contributors(dir: &Path) -> Option<Vec<String>> {
+    let output = Command::new("git")
+        .args(["log", "--format=%ae"])
+        .current_dir(dir)
+        .output()
+        .ok()?;
+
+    if !output.status.success() {
+        return None;
+    }
+
+    let contributors: BTreeSet<String> = String::from_utf8_lossy(&output.stdout)
+        .lines()
+        .map(str::trim)
+        .filter(|email| !email.is_empty())
+        .map(str::to_owned)
+        .collect();
+    Some(contributors.into_iter().collect())
 }
 
 /// Count total commits in the repository.
@@ -233,6 +251,23 @@ fn parse_file_churn_output(output: &str) -> BTreeMap<PathBuf, usize> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs;
+    use std::process::Command;
+
+    fn run_git(dir: &Path, args: &[&str]) {
+        let output = Command::new("git")
+            .args(args)
+            .current_dir(dir)
+            .env("GIT_AUTHOR_DATE", "2020-01-02T03:04:05Z")
+            .env("GIT_COMMITTER_DATE", "2020-01-02T03:04:05Z")
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "git failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
 
     #[test]
     fn iso_week_from_valid_date() {
@@ -263,6 +298,23 @@ mod tests {
         let h = history.unwrap();
         assert!(h.total_commits > 0);
         assert!(!h.contributors.is_empty());
+    }
+
+    #[test]
+    fn collect_git_history_keeps_contributors_for_inactive_repo() {
+        let dir = tempfile::TempDir::new().unwrap();
+        run_git(dir.path(), &["init", "-b", "main"]);
+        run_git(dir.path(), &["config", "user.name", "Old Contributor"]);
+        run_git(dir.path(), &["config", "user.email", "old@example.invalid"]);
+        fs::write(dir.path().join("old.txt"), "old\n").unwrap();
+        run_git(dir.path(), &["add", "old.txt"]);
+        run_git(dir.path(), &["commit", "-m", "test: old commit"]);
+
+        let history = collect_git_history(dir.path()).unwrap();
+
+        assert_eq!(history.total_commits, 1);
+        assert_eq!(history.contributors, vec!["old@example.invalid"]);
+        assert!(history.weekly_activity.is_empty());
     }
 
     #[test]
