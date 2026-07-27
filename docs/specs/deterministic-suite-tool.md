@@ -42,6 +42,7 @@ through typed child agent requests. Existing snapshots containing historical
 | R-1010 | Risk/churn inputs do not depend on wall-clock time | P1 |
 | R-1011 | User-global Git ignore configuration cannot change scanner results | P1 |
 | R-1012 | Cargo, README, and Homebrew metadata use the current `wiseyoda/ai-mux-repostat` repository | P1 |
+| R-1013 | The repository vendors the generated Protocol V1 RC Rust types, structural decoders, schema descriptors, and aggregate hash from the canonical Engine schema package | P0 |
 
 ## CLI Contract
 
@@ -91,6 +92,9 @@ artifact paths.
 - The former `REPOSTAT_SKIP_AI` switch is obsolete because deterministic
   analysis never invokes AI.
 - Direct Claude/skill orchestration is removed from the compiled product.
+- The extension manifest pins the Protocol V1 RC aggregate schema hash. The
+  vendored Rust helper must decode all canonical examples, reject undeclared
+  fields, and match that same hash without importing an Engine checkout.
 
 ## Acceptance Evidence
 
@@ -102,5 +106,8 @@ artifact paths.
 - Two standalone results and one extension result are byte-identical.
 - `--save` alone creates snapshot/index state.
 - Manifest and result examples validate against their closed schemas.
+- Vendored Rust helpers compile in this independent repository, decode all
+  eight canonical examples, reject structural drift, and match the manifest
+  protocol hash.
 - `cargo fmt --check`, Clippy with warnings denied, and the full Rust test suite
   pass.

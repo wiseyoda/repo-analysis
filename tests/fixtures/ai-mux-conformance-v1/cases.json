@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1",
+  "release": "1.0.0-rc.1",
+  "toolCases": [
+    { "id": "tool-success", "mode": "success", "exitCode": 0, "resultStatus": "success" },
+    { "id": "tool-warning", "mode": "warning", "exitCode": 0, "resultStatus": "partial" },
+    { "id": "tool-crash", "mode": "crash", "exitCode": 23, "resultStatus": null },
+    { "id": "tool-mutation", "mode": "mutate", "exitCode": 0, "resultStatus": "success" }
+  ],
+  "workflowCases": [
+    { "id": "workflow-success", "mode": "success", "exitCode": 0, "types": ["initialized", "agent.start"] },
+    { "id": "workflow-partial", "mode": "partial", "exitCode": 0, "types": ["initialized", "warning.raised", "agent.start"] },
+    { "id": "workflow-checkpoint", "mode": "checkpoint", "exitCode": 0, "types": ["initialized", "checkpoint.save"] },
+    { "id": "workflow-approval", "mode": "approval", "exitCode": 0, "types": ["initialized", "approval.request"] },
+    { "id": "workflow-crash", "mode": "crash", "exitCode": 29, "types": [] }
+  ]
+}

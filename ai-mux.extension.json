@@ -7,6 +7,7 @@
   "roles": ["tool"],
   "engine": ">=0.10.2 <1.0.0",
   "protocol": "1.0",
+  "protocolSchemaHash": "bb33b84968522aad60993c3459d67a45bd82e03ddc86e30d4d56238af2b80b5a",
   "entrypoint": {
     "command": "repostat",
     "args": ["extension"]
