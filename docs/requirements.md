@@ -144,6 +144,12 @@
 | R-1010 | Churn and risk inputs are independent of wall-clock time | P1 |
 | R-1011 | User-global Git ignore configuration cannot change scan results | P1 |
 | R-1012 | Distribution metadata uses `wiseyoda/ai-mux-repostat` | P1 |
+| R-1013 | Generated Protocol V1 RC Rust helpers, schema descriptors, conformance fixtures, and aggregate hash are vendored without an Engine checkout dependency | P0 |
+| R-1014 | A repository-owned command stages exactly the release binary, extension manifest, and result schema into a new private runtime root | P0 |
+| R-1015 | Runtime staging requires an existing executable binary and never builds, installs, signs, publishes, or mutates source state implicitly | P0 |
+| R-1016 | Runtime staging normalizes the binary to mode `0500` and data files to `0400` before Engine package hashing | P0 |
+| R-1017 | Runtime staging refuses an existing destination and publishes the completed root by atomic rename | P0 |
+| R-1018 | The staged root is source input only; Engine owns source metadata, package hashing, trust, installation, lifecycle, and run binding | P0 |
 
 ## Cross-Cutting Requirements
 

@@ -34,6 +34,21 @@ cp target/release/repostat ~/.local/bin/
 cargo install repostat
 ```
 
+### Prepare an ai-mux suite runtime
+
+The repository gate builds the locked release binary. Stage the exact closed
+runtime root before Engine packages it:
+
+```bash
+./scripts/verify.sh
+./scripts/prepare-suite-runtime.sh /path/to/new/repostat-runtime
+```
+
+The staging command does not install, sign, publish, or contact a provider. It
+copies only the binary, extension manifest, and result schema into a new
+private directory with normalized modes. Engine owns package provenance,
+hashing, trust approval, installation, update, rollback, and run binding.
+
 ### Shell completions
 
 ```bash
@@ -152,7 +167,8 @@ Read [docs/constitution.md](docs/constitution.md) first. Then:
 5. Open a PR
 
 `scripts/verify.sh` is the repository verification entrypoint. It runs
-`cargo fmt --check`, Clippy with warnings denied, and the complete test suite.
+`cargo fmt --check`, Clippy with warnings denied, the complete test suite, and
+the locked release build required by suite packaging.
 
 ## License
 

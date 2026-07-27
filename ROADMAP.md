@@ -193,6 +193,7 @@ and receive identical `repostat.metrics.v1` results.
 - [x] Byte-identical standalone/extension fixture proof
 - [x] Suite extension manifest and corrected distribution metadata
 - [x] Engine captures adapter stdout as an immutable artifact (local Candidate)
+- [x] Closed release runtime staging with exact files and normalized modes
 - [ ] Immutable installed standalone/Engine parity proof
 
 **Exit Criteria**: Rust verification, provider mutation traps, recursive

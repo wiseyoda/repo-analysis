@@ -43,6 +43,11 @@ through typed child agent requests. Existing snapshots containing historical
 | R-1011 | User-global Git ignore configuration cannot change scanner results | P1 |
 | R-1012 | Cargo, README, and Homebrew metadata use the current `wiseyoda/ai-mux-repostat` repository | P1 |
 | R-1013 | The repository vendors the generated Protocol V1 RC Rust types, structural decoders, schema descriptors, and aggregate hash from the canonical Engine schema package | P0 |
+| R-1014 | A repository-owned command stages one closed release runtime root | P0 |
+| R-1015 | Staging requires an existing executable binary and has no implicit build, install, signing, publish, or source-write side effect | P0 |
+| R-1016 | Staging normalizes executable and data modes before Engine hashing | P0 |
+| R-1017 | Staging refuses replacement and publishes only by atomic rename | P0 |
+| R-1018 | Engine remains the authority for package provenance, hashing, trust, installation, lifecycle, and run binding | P0 |
 
 ## CLI Contract
 
@@ -84,6 +89,34 @@ It intentionally excludes:
 Engine owns run metadata, timestamps, artifact IDs, retention, checksums, and
 artifact paths.
 
+## Release Runtime Staging
+
+Repostat produces a prepared runtime root before Engine constructs a suite
+package:
+
+```text
+repostat
+ai-mux.extension.json
+schemas/repostat-metrics-v1.schema.json
+```
+
+`scripts/prepare-suite-runtime.sh <destination>` stages the existing
+`target/release/repostat` binary. `--binary <path>` selects an explicit
+cross-compiled or CI-produced binary. The command:
+
+- requires the binary to exist, be a regular file, and be executable;
+- refuses an existing destination;
+- copies through a private sibling staging directory;
+- normalizes the executable to mode `0500` and the two data files to `0400`;
+- atomically renames the complete staging directory to the destination; and
+- performs no build, install, signing, provider, account, network, or source
+  mutation.
+
+The prepared root is not an installed package and carries no independent trust
+claim. Engine adds the declared source repository and commit, exact file hashes
+and modes, trust digest, compatibility checks, lifecycle records, and run
+binding when it constructs and installs the immutable suite package.
+
 ## Compatibility
 
 - Existing snapshot files and AI fields remain deserializable.
@@ -109,5 +142,7 @@ artifact paths.
 - Vendored Rust helpers compile in this independent repository, decode all
   eight canonical examples, reject structural drift, and match the manifest
   protocol hash.
+- Runtime-staging tests prove the exact file set, byte preservation, normalized
+  modes, existing-destination refusal, and missing/non-executable binary errors.
 - `cargo fmt --check`, Clippy with warnings denied, and the full Rust test suite
   pass.
