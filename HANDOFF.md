@@ -6,6 +6,8 @@ Branch: `codex/suite-integration`
 
 Starting baseline: `59323ea`
 
+Protocol V1 RC consumer: `ca5fb96`
+
 ## Scope
 
 RPS-01 and the Repostat-owned portion of RPS-02 make Repostat the suite's
@@ -32,6 +34,11 @@ deterministic tool provider. The controlling decision is ADR-008 in
   snapshot fields remain readable.
 - Package, repository, Homebrew, contributor, architecture, and operator
   documentation now describe the current boundary.
+- The manifest pins Protocol V1 `1.0.0-rc.1` at aggregate SHA-256
+  `bb33b84968522aad60993c3459d67a45bd82e03ddc86e30d4d56238af2b80b5a`.
+  Generated Rust types, structural decoders, schema descriptors, release
+  records, and the versioned fake tool/workflow corpus are vendored so Repostat
+  does not import an Engine checkout.
 
 ## Verification
 
@@ -40,6 +47,7 @@ deterministic tool provider. The controlling decision is ADR-008 in
   - Clippy with warnings denied: passed
   - unit tests: 228 passed, 0 failed
   - legacy CLI integration: 15 passed, 0 failed
+  - generated Protocol V1 tests: 3 passed, 0 failed
   - suite conformance: 10 passed, 0 failed
 - Additional Clippy run over all targets with warnings denied: passed.
 
