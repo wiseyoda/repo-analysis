@@ -1,5 +1,37 @@
 # Repostat Suite Integration Handoff
 
+## Immutable runtime checkpoint — 2026-07-27
+
+- Repostat commit `62e7aa4` adds a closed runtime-staging command. Its exact
+  full gate now runs rustfmt, Clippy with warnings denied, 228 unit tests, 15
+  CLI tests, 2 runtime-staging tests, 3 generated-protocol tests, 10 suite-
+  conformance tests, and a locked release build.
+- `scripts/prepare-suite-runtime.sh` publishes exactly the release binary,
+  extension manifest, and result schema through a private sibling staging
+  directory and atomic rename. It normalizes the binary to `0500`, data files
+  to `0400`, refuses replacement, and performs no implicit build, install,
+  signing, provider, account, network, or source mutation.
+- The resulting binary SHA-256 is
+  `3933688418d6e28cced0430914d3a868d96b6cebb6e48ca0717f75465800ff49`.
+  Engine built isolated package
+  `7a4e77d30192429979da2fc059778fa78af3d61dc141edbb9ddd70472dc12850`;
+  catalog and doctor reported it active, compatible, and healthy.
+- Engine commit `851f4d0` removes caller-selected Repostat installation
+  references. Engine resolves and re-inspects the active trusted package,
+  rejects caller-selected code, and pins both root and child runs to its exact
+  package digest.
+- A real isolated Engine tool run from that package succeeded and captured a
+  17,668-byte immutable artifact with SHA-256
+  `4afc98ec95403f81368a58f9d384cddb309aeaf0c7e2a98c4ea39cfa15fe11af`,
+  byte-identical to standalone `--json --no-write` output. Engine's exact gate
+  passes 1,725 tests with 4,397 assertions across 162 files plus all static
+  checks.
+- Every install and run in this checkpoint used disposable
+  `LVL_TEST_GLOBAL_DIR` state. No host suite installation, provider/account
+  call, publish, push, deployment, signing, or target-repository mutation
+  occurred. Host RC, sandbox, restart, source-removal, CI artifact retention,
+  upgrade, and rollback proof remain.
+
 Updated: 2026-07-26
 
 Branch: `codex/suite-integration`
