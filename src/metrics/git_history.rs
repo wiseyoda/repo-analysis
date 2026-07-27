@@ -216,13 +216,13 @@ pub(crate) fn changed_files(dir: &Path, revspec: &str) -> Result<Vec<PathBuf>, S
     Ok(paths)
 }
 
-/// Collect per-file commit counts over the last 6 months.
+/// Collect per-file commit counts across all reachable history.
 ///
 /// Returns a map of file path → number of commits touching that file.
 /// Returns `None` if git is unavailable or directory is not a git repo.
 pub(crate) fn collect_file_churn(dir: &Path) -> Option<BTreeMap<PathBuf, usize>> {
     let output = Command::new("git")
-        .args(["log", "--format=", "--name-only", "--since=6 months ago"])
+        .args(["log", "--format=", "--name-only"])
         .current_dir(dir)
         .output()
         .ok()?;
@@ -318,6 +318,21 @@ mod tests {
     }
 
     #[test]
+    fn file_churn_is_not_bounded_by_wall_clock_time() {
+        let dir = tempfile::TempDir::new().unwrap();
+        run_git(dir.path(), &["init", "-b", "main"]);
+        run_git(dir.path(), &["config", "user.name", "Old Contributor"]);
+        run_git(dir.path(), &["config", "user.email", "old@example.invalid"]);
+        fs::write(dir.path().join("old.rs"), "fn old() {}\n").unwrap();
+        run_git(dir.path(), &["add", "old.rs"]);
+        run_git(dir.path(), &["commit", "-m", "test: old commit"]);
+
+        let churn = collect_file_churn(dir.path()).unwrap();
+
+        assert_eq!(churn.get(Path::new("old.rs")), Some(&1));
+    }
+
+    #[test]
     fn collect_git_history_returns_none_for_non_git() {
         let dir = tempfile::TempDir::new().unwrap();
         let history = collect_git_history(dir.path());
@@ -332,7 +347,7 @@ mod tests {
         // This repo has files that were committed — map should not be empty
         assert!(!map.is_empty(), "churn map should contain entries");
         // All counts should be > 0
-        for (_, count) in &map {
+        for count in map.values() {
             assert!(*count > 0, "churn count should be positive");
         }
     }

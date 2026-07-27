@@ -17,24 +17,16 @@
 efficient querying across many snapshots.
 **Promote when**: Users accumulate 100+ snapshots and querying becomes slow.
 
-### Direct Anthropic API integration
-**Origin**: ADR-003 trade-offs.
-**Description**: Call the Anthropic API directly instead of shelling out to Claude CLI.
-Gives more control over token budgets, model selection, and streaming.
-**Promote when**: Claude CLI becomes a bottleneck or users need fine-grained model control.
-
-### Multi-provider AI support
-**Origin**: Round 4 Q3 alternatives.
-**Description**: Support Gemini, OpenAI, and other providers alongside Claude.
-Config file picks the provider.
-**Promote when**: User demand or if a provider offers better price/performance for
-summary-level analysis.
-
-### `--model` flag for AI analysis
-**Origin**: ADR-007 trade-offs.
-**Description**: Allow users to specify which model to use for AI analysis
-(e.g., `--model sonnet` for deeper analysis).
-**Promote when**: Users report that fast-model analysis is too shallow.
+### Engine-routed AI enrichment
+**Origin**: ADR-008, superseding the direct-provider ideas from ADR-003,
+ADR-006, and ADR-007.
+**Description**: Add optional architecture, feature, quality, documentation,
+and effort enrichment as an explicit ai-mux Engine workflow over the
+`repostat.metrics.v1` artifact. Engine owns provider selection, accounts,
+budgets, cancellation, validation, and enriched artifacts; Repostat must not
+gain a provider SDK, provider CLI spawn, credential, or model flag.
+**Promote when**: The Engine tool adapter and immutable artifact capture pass
+suite conformance and the workflow has an explicit token-spend user action.
 
 ### Remote repo support
 **Origin**: Round 1 Q4 — CLI invocation.

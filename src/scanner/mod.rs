@@ -32,6 +32,8 @@ const HEURISTIC_EXCLUDES: &[&str] = &[
     "build",
     "dist",
     ".next",
+    ".repostat",
+    "repostat-report.html",
     "Pods",
     "target",
     ".git",
@@ -66,6 +68,7 @@ pub(crate) fn scan(dir: &Path, config: &Config) -> Result<Vec<ScannedFile>, Scan
 
     let mut files: Vec<ScannedFile> = WalkBuilder::new(dir)
         .hidden(false)
+        .git_global(false)
         .filter_entry(|entry| !is_heuristic_excluded(entry.file_name()))
         .build()
         .filter_map(|entry| entry.ok())

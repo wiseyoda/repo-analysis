@@ -7,7 +7,7 @@ use clap_complete::Shell;
 
 use crate::errors::RepostatError;
 
-/// Analyze repository complexity, track coding progress, and produce AI-augmented reports.
+/// Deterministically analyze repository complexity and coding health.
 #[derive(Parser, Debug)]
 #[command(name = "repostat", version, about)]
 pub(crate) struct Args {
@@ -18,11 +18,11 @@ pub(crate) struct Args {
     /// Path to the repository to analyze [default: current directory].
     pub(crate) path: Option<PathBuf>,
 
-    /// Output raw JSON to stdout instead of the dashboard.
+    /// Output stable repostat.metrics.v1 JSON to stdout.
     #[arg(long, short)]
     pub(crate) json: bool,
 
-    /// Generate a Markdown report file.
+    /// Output a Markdown report to stdout.
     #[arg(long, short)]
     pub(crate) markdown: bool,
 
@@ -31,8 +31,16 @@ pub(crate) struct Args {
     pub(crate) verbose: bool,
 
     /// Generate an HTML report file in the target directory.
-    #[arg(long)]
+    #[arg(long, conflicts_with = "no_write")]
     pub(crate) html: bool,
+
+    /// Persist a historical snapshot and update the repository index.
+    #[arg(long, conflicts_with = "no_write")]
+    pub(crate) save: bool,
+
+    /// Guarantee that no snapshot, index, or HTML output is written.
+    #[arg(long, conflicts_with_all = ["save", "html"])]
+    pub(crate) no_write: bool,
 }
 
 /// Available subcommands.
@@ -65,6 +73,11 @@ pub(crate) enum Command {
         /// Path to the repository [default: current directory].
         path: Option<PathBuf>,
     },
+    /// Run the deterministic Engine tool adapter and emit metrics JSON only.
+    Extension {
+        /// Path to the repository [default: current directory].
+        path: Option<PathBuf>,
+    },
 }
 
 /// Parsed and validated CLI arguments.
@@ -86,6 +99,23 @@ pub(crate) enum ValidatedCommand {
     },
     /// Analyze changed files since a revision.
     Diff(DiffArgs),
+    /// Emit deterministic suite tool output.
+    Extension(ExtensionArgs),
+}
+
+/// Arguments for the suite extension adapter.
+pub(crate) struct ExtensionArgs {
+    /// Canonical target directory.
+    pub(crate) path: PathBuf,
+}
+
+/// Whether standalone history should be persisted.
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub(crate) enum WriteMode {
+    /// Read-only analysis.
+    NoWrite,
+    /// Persist snapshot and index state.
+    Save,
 }
 
 /// Arguments for the diff subcommand.
@@ -108,6 +138,8 @@ pub(crate) struct AnalyzeArgs {
     pub(crate) verbose: bool,
     /// Whether to generate HTML output.
     pub(crate) html: bool,
+    /// Whether to persist standalone history.
+    pub(crate) write_mode: WriteMode,
 }
 
 /// Arguments for the trend subcommand.
@@ -133,14 +165,25 @@ pub(crate) fn parse_and_validate() -> anyhow::Result<ValidatedCommand> {
             let path = resolve_path(path)?;
             Ok(ValidatedCommand::Diff(DiffArgs { revspec, path }))
         }
+        Some(Command::Extension { path }) => {
+            let path = resolve_path(path)?;
+            Ok(ValidatedCommand::Extension(ExtensionArgs { path }))
+        }
         None => {
             let path = resolve_path(args.path)?;
+            let write_mode = if args.save {
+                WriteMode::Save
+            } else {
+                let _explicit_no_write = args.no_write;
+                WriteMode::NoWrite
+            };
             Ok(ValidatedCommand::Analyze(AnalyzeArgs {
                 path,
                 json: args.json,
                 markdown: args.markdown,
                 verbose: args.verbose,
                 html: args.html,
+                write_mode,
             }))
         }
     }
@@ -175,5 +218,5 @@ fn resolve_path(path: Option<PathBuf>) -> anyhow::Result<PathBuf> {
         return Err(RepostatError::NotADirectory(path).into());
     }
 
-    Ok(path)
+    Ok(std::fs::canonicalize(path)?)
 }

@@ -30,7 +30,7 @@ pub(crate) struct AnalysisResult {
     pub(crate) dep_summary: DependencySummary,
     /// Documentation metrics (None if not computed).
     pub(crate) doc_metrics: Option<DocumentationMetrics>,
-    /// AI analysis results (None if Claude CLI unavailable).
+    /// Historical AI analysis results, if supplied by an older snapshot.
     pub(crate) ai_result: Option<crate::ai::schema::AiAnalysisResult>,
     /// Number of files skipped due to read errors.
     pub(crate) skipped_files: usize,
@@ -79,7 +79,7 @@ pub(crate) struct Snapshot {
 pub(crate) struct SnapshotRiskEntry {
     /// File path (relative to repo root).
     pub(crate) file: String,
-    /// Number of commits in the last 6 months.
+    /// Number of commits across all reachable history.
     pub(crate) churn_count: usize,
     /// Maximum cyclomatic complexity of any function.
     pub(crate) max_complexity: usize,
@@ -299,10 +299,11 @@ impl SnapshotLineMetrics {
     }
 }
 
-/// Get the current git SHA, if in a git repository.
-pub(crate) fn current_git_sha() -> Option<String> {
+/// Get the target repository's current git SHA, if available.
+pub(crate) fn current_git_sha(target_dir: &std::path::Path) -> Option<String> {
     let output = std::process::Command::new("git")
         .args(["rev-parse", "HEAD"])
+        .current_dir(target_dir)
         .output()
         .ok()?;
     if output.status.success() {

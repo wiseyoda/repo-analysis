@@ -2,6 +2,9 @@
 
 > Phase 6 of the repostat roadmap. Sparkline trends, git history integration,
 > cross-repo tracking.
+>
+> ADR-008 changes persistence from implicit to explicit. `trend` and `list`
+> behavior remains, while new history is created only with `--save`.
 
 ## Purpose
 
@@ -23,7 +26,8 @@ integrate git log data, compare snapshots, and track multiple repos.
 Refactor from flat flags to subcommands:
 
 ```
-repostat [path]              → analyze (default, current behavior)
+repostat [path]              → deterministic, no-write analysis
+repostat --save [path]       → analyze and persist standalone history
 repostat trend [path]        → show sparkline trends across snapshots
 repostat list                → show all tracked repos
 ```
@@ -105,7 +109,8 @@ repostat trend — 8 snapshots (2024-01-15 → 2024-03-20)
 
 ### Cross-Repo Index (R-503/R-504)
 
-1. After each analysis, register the repo in `~/.repostat/repos.json`.
+1. After each successful `--save` analysis, register the repo in
+   `~/.repostat/repos.json`.
 2. `repostat list` reads the index and displays:
    ```
    repostat — tracked repositories
@@ -115,9 +120,10 @@ repostat trend — 8 snapshots (2024-01-15 → 2024-03-20)
    ───────────────────────────────────
    ```
 
-### Dashboard Sparklines (R-500)
+### Saved-History Dashboard Sparklines (R-500)
 
-When 3+ snapshots exist, add inline sparklines to the summary section:
+When `--save` is used and 3+ snapshots exist, add inline sparklines to the
+summary section:
 
 ```
 │ Lines: 6400       ▁▂▃▄▅▆▇█
@@ -137,5 +143,5 @@ When 3+ snapshots exist, add inline sparklines to the summary section:
 - [ ] `repostat trend` shows sparklines for 5+ snapshots.
 - [ ] Git history matches `git log --stat` output.
 - [ ] `repostat list` shows tracked repos from index.
-- [ ] Dashboard shows inline sparklines when snapshots exist.
+- [ ] `--save` dashboard shows inline sparklines when snapshots exist.
 - [ ] Backward compatible: `repostat [path]` still works.

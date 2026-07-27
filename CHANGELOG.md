@@ -7,6 +7,26 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+- Deterministic `repostat.metrics.v1` JSON shared by `--json` and
+  `repostat extension`
+- Closed suite extension manifest and result schema
+- Explicit `--save` history persistence and `--no-write` enforcement
+- Conformance tests for provider mutation traps, recursive no-write behavior,
+  byte stability, canonical source identity, Git isolation, and metadata
+
+### Changed
+- Ordinary analysis is token-free and read-only by default
+- File churn uses all reachable history so unchanged repositories do not vary
+  with wall-clock time
+- Git scanning ignores user-global exclude configuration
+- Repository and Homebrew metadata point to `wiseyoda/ai-mux-repostat`
+
+### Removed
+- Direct Claude CLI execution and local skill orchestration from the compiled
+  product; future AI enrichment is routed explicitly through ai-mux Engine
+- `REPOSTAT_SKIP_AI`, which is unnecessary when every scan is model-free
+
 ## [0.9.0] - 2026-03-20
 
 ### Added

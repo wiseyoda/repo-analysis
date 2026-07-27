@@ -2,6 +2,11 @@
 
 > Phase 5 of the repostat roadmap. Claude CLI integration for architecture,
 > features, quality, and effort estimation.
+>
+> **Superseded for execution by
+> [Deterministic Suite Tool](deterministic-suite-tool.md).** Historical snapshot
+> deserialization and rendering remain supported, but Repostat no longer starts
+> Claude directly. Any new enrichment is an explicit Engine workflow.
 
 ## Purpose
 

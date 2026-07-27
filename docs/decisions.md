@@ -54,7 +54,7 @@ Options: tree-sitter, regex heuristics, language-specific AST tools.
 
 ---
 
-## ADR-003 | Accepted | 2026-03-19
+## ADR-003 | Superseded by ADR-008 | 2026-03-19
 
 ### Use Claude CLI for AI-augmented analysis
 
@@ -125,7 +125,7 @@ have different conventions.
 
 ---
 
-## ADR-006 | Accepted | 2026-03-19
+## ADR-006 | Superseded by ADR-008 | 2026-03-19
 
 ### Skill files for AI prompts
 
@@ -146,7 +146,7 @@ defaults that are written on first run if the directory is empty.
 
 ---
 
-## ADR-007 | Accepted | 2026-03-19
+## ADR-007 | Superseded by ADR-008 | 2026-03-19
 
 ### Fast model always for AI analysis
 
@@ -165,6 +165,42 @@ smart model opt-in, tiered, configurable.
 - Less nuanced architecture and quality analysis
 - May miss subtle patterns that larger models would catch
 - Can revisit with `--model` flag if users want deeper analysis (see BACKLOG)
+
+---
+
+## ADR-008 | Accepted | 2026-07-26
+
+### Deterministic no-write suite tool
+
+**Context**: Direct Claude subprocesses made ordinary scans slow, spent hidden
+tokens, depended on local authentication, and bypassed ai-mux Engine's account,
+budget, validation, and artifact controls. Automatic snapshots and global index
+updates also made a nominal analysis command mutate state.
+
+**Decision**:
+
+- Default Repostat analysis is deterministic, token-free, and no-write.
+- `--save` explicitly persists standalone history and updates the index.
+- `--json` and `repostat extension` emit the same versioned
+  `repostat.metrics.v1` payload.
+- Repostat writes no Engine artifact path; Engine captures stdout into its own
+  immutable artifact store.
+- Repostat retains historical AI snapshot types but starts no provider.
+- Optional enrichment is rebuilt only as an explicit Engine workflow.
+
+**Rationale**:
+
+- One shared scanner keeps standalone and suite metrics identical.
+- Explicit writes make repository mutation reviewable and testable.
+- Engine-visible enrichment prevents hidden token and account use.
+- Timestamp-free structured output permits byte-for-byte conformance.
+
+**Trade-offs**:
+
+- Ordinary scans no longer include live architecture or effort summaries.
+- Users must pass `--save` to build new trend history.
+- Full Engine artifact proof depends on the Engine extension host and immutable
+  installer, which are separate suite initiatives.
 
 ---
 

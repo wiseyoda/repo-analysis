@@ -20,14 +20,17 @@
 | Crate | Purpose | Justification |
 |-------|---------|---------------|
 | `clap` (derive) | CLI argument parsing | De facto standard. Derive macros reduce boilerplate. Generates help, completions. |
+| `clap_complete` + `clap_mangen` | Shell and man-page generation | Keeps generated CLI documentation aligned with clap definitions. |
 | `tree-sitter` | Source code parsing | Multi-language AST parsing for complexity analysis. Used by GitHub, Neovim. |
 | `tree-sitter-{lang}` | Language grammars | Compiled grammars for top 10 languages. |
 | `rayon` | Parallelism | Data-parallel file processing. Zero-config thread pool. |
-| `serde` + `serde_json` | Serialization | Snapshot storage, config parsing, AI response handling. |
+| `serde` + `serde_json` | Serialization | Historical snapshots and stable `repostat.metrics.v1` output. |
 | `toml` | Config parsing | `.repostat.toml` configuration file. |
 | `ignore` | Gitignore-aware walking | From the ripgrep ecosystem. Handles `.gitignore`, `.ignore`, nested overrides. |
+| `globset` | Configured include/exclude matching | Compiles user patterns once for deterministic scans. |
 | `crossterm` | Terminal rendering | Cross-platform terminal manipulation for the dashboard. |
 | `chrono` | Timestamps | Snapshot timestamps, date formatting in reports. |
+| `dirs` | Global index location | Locates the user data directory for explicit standalone history. |
 | `thiserror` | Error types | Derive macro for clean, idiomatic error enums. |
 | `anyhow` | Error propagation | Ergonomic error handling in application code (not library code). |
 
@@ -38,15 +41,16 @@
 | `assert_cmd` | CLI integration testing — run the binary and assert on output |
 | `predicates` | Fluent assertions for integration tests |
 | `tempfile` | Temporary directories for test fixtures |
-| `insta` | Snapshot testing for terminal output and reports |
 | `pretty_assertions` | Readable test diffs |
 
 ## External Tools
 
 | Tool | Purpose | Integration |
 |------|---------|-------------|
-| Claude CLI | AI-augmented analysis | Invoked via `claude -p` subprocess in target directory |
-| git | History analysis | Invoked via subprocess for log/diff/rev-parse |
+| git | Source identity and history analysis | Invoked with the target repository as its working directory |
+
+Repostat has no model or provider runtime dependency. Optional AI enrichment is
+an explicit ai-mux Engine workflow, outside the Repostat process.
 
 ## Architecture Layers
 
@@ -56,11 +60,11 @@
 ├─────────────────────────────────────────────┤
 │                  Report                      │  Dashboard rendering, markdown generation
 ├─────────────────────────────────────────────┤
-│                 Analysis                     │  Orchestrates all analysis passes
+│          Shared deterministic analysis       │  One scanner for standalone + extension
 ├────────────┬────────────┬───────────────────┤
-│  Metrics   │ Complexity │   AI Provider     │  LOC counting, tree-sitter, Claude CLI
+│  Metrics   │ Complexity │  Stable result     │  LOC, tree-sitter, repostat.metrics.v1
 ├────────────┼────────────┼───────────────────┤
-│  Scanner   │  Parsers   │   Snapshot Store  │  File walking, language detection, JSON I/O
+│  Scanner   │  Git read  │ Snapshot (opt-in) │  Read-only core, explicit history writes
 └────────────┴────────────┴───────────────────┘
 ```
 
@@ -70,37 +74,44 @@
 repostat/
 ├── src/
 │   ├── main.rs              # Entry point, CLI setup
+│   ├── analyze_command.rs   # Standalone analyze orchestration
+│   ├── analysis.rs          # Shared deterministic analysis
 │   ├── cli.rs               # Argument definitions (clap)
 │   ├── config.rs            # .repostat.toml parsing
+│   ├── result.rs            # Stable suite/standalone JSON
 │   ├── scanner/
 │   │   ├── mod.rs           # File walker, exclusion logic
 │   │   ├── language.rs      # Language detection
-│   │   └── gitignore.rs     # Gitignore integration
+│   │   └── filter.rs        # Generated/minified detection
 │   ├── metrics/
 │   │   ├── mod.rs           # Metric aggregation
 │   │   ├── loc.rs           # Line counting
 │   │   ├── complexity.rs    # Cyclomatic + cognitive complexity
-│   │   ├── functions.rs     # Function size analysis
-│   │   └── dependencies.rs  # Dependency manifest parsing
+│   │   ├── dependencies.rs  # Dependency manifest parsing
+│   │   ├── documentation.rs # Documentation metrics
+│   │   ├── git_history.rs   # Git history and deterministic churn
+│   │   └── risk.rs          # Churn/complexity risk scoring
 │   ├── ai/
-│   │   ├── mod.rs           # AI orchestration
-│   │   ├── claude.rs        # Claude CLI invocation
-│   │   ├── skills.rs        # Skill file loading
-│   │   └── schema.rs        # Response parsing + validation
+│   │   ├── mod.rs           # Historical compatibility boundary
+│   │   └── schema.rs        # Historical AI snapshot schema
 │   ├── snapshot/
 │   │   ├── mod.rs           # Snapshot management
 │   │   ├── store.rs         # Read/write JSON snapshots
+│   │   ├── index.rs         # Explicit cross-repo history index
 │   │   └── diff.rs          # Snapshot comparison
 │   ├── report/
 │   │   ├── mod.rs           # Report orchestration
 │   │   ├── dashboard.rs     # Terminal dashboard rendering
 │   │   ├── markdown.rs      # Markdown report generation
+│   │   ├── html.rs          # Explicit HTML export
 │   │   └── trend.rs         # Sparkline trend display
 │   └── errors.rs            # Error types
 ├── tests/
-│   ├── integration/         # End-to-end CLI tests
-│   ├── fixtures/            # Test repos and sample data
-│   └── snapshots/           # insta snapshot files
+│   ├── cli_basic.rs         # Legacy CLI integration tests
+│   └── suite_tool.rs        # Determinism, no-write, manifest conformance
+├── schemas/
+│   └── repostat-metrics-v1.schema.json
+├── ai-mux.extension.json
 ├── docs/
 │   ├── constitution.md
 │   ├── requirements.md
@@ -122,8 +133,8 @@ repostat/
 |-------|------|-------|
 | Unit | `#[cfg(test)]` modules | Individual functions, parsers, calculations |
 | Integration | `assert_cmd` | Full CLI invocation against fixture repos |
-| Snapshot | `insta` | Terminal output, markdown reports, JSON snapshots |
 | Property | `proptest` (if needed) | Edge cases in parsing, counting, complexity math |
+| Suite conformance | `assert_cmd` + mutation traps | No providers, no writes, byte stability, manifest/schema closure |
 
 ## CI Pipeline
 

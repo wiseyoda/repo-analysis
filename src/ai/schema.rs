@@ -1,4 +1,4 @@
-//! AI response parsing: lenient JSON extraction with typed defaults.
+//! Historical AI result types retained for snapshot compatibility.
 
 use serde::{Deserialize, Serialize};
 
@@ -25,6 +25,7 @@ pub(crate) struct AiAnalysisResult {
     pub(crate) doc_quality: Option<DocQuality>,
 }
 
+#[cfg(test)]
 impl AiAnalysisResult {
     /// Check if all fields are None (no results).
     pub(crate) fn is_empty(&self) -> bool {
@@ -162,6 +163,7 @@ pub(crate) struct DocQualityEntry {
 /// 1. Parse the entire string as JSON.
 /// 2. Extract content from ```json ... ``` blocks.
 /// 3. Find the first `{` to last `}` and try parsing that substring.
+#[cfg(test)]
 pub(crate) fn extract_json(raw: &str) -> Option<serde_json::Value> {
     let trimmed = raw.trim();
 
@@ -190,6 +192,7 @@ pub(crate) fn extract_json(raw: &str) -> Option<serde_json::Value> {
 }
 
 /// Extract content from a markdown JSON code block.
+#[cfg(test)]
 fn extract_from_code_block(text: &str) -> Option<&str> {
     let start_marker = "```json";
     let end_marker = "```";
@@ -206,6 +209,7 @@ fn extract_from_code_block(text: &str) -> Option<&str> {
 ///
 /// Uses lenient parsing: if the JSON doesn't match the expected schema
 /// for a skill, the result for that skill is simply skipped.
+#[cfg(test)]
 pub(crate) fn merge_skill_result(result: &mut AiAnalysisResult, skill_name: &str, raw: &str) {
     let Some(json) = extract_json(raw) else {
         eprintln!("warning: could not extract JSON from '{skill_name}' response");
@@ -391,12 +395,14 @@ mod tests {
 
     #[test]
     fn ai_result_not_empty_with_any_field() {
-        let mut result = AiAnalysisResult::default();
-        result.architecture = Some(ArchitectureSummary {
-            description: "test".to_string(),
-            patterns: vec![],
-            design_approach: String::new(),
-        });
+        let result = AiAnalysisResult {
+            architecture: Some(ArchitectureSummary {
+                description: "test".to_string(),
+                patterns: vec![],
+                design_approach: String::new(),
+            }),
+            ..Default::default()
+        };
         assert!(!result.is_empty());
     }
 

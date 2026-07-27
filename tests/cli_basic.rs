@@ -2,11 +2,9 @@ use assert_cmd::Command;
 use predicates::prelude::*;
 use tempfile::TempDir;
 
-/// Create a repostat command with AI disabled for fast tests.
+/// Create a repostat command.
 fn repostat() -> Command {
-    let mut cmd = Command::cargo_bin("repostat").unwrap();
-    cmd.env("REPOSTAT_SKIP_AI", "1");
-    cmd
+    Command::cargo_bin("repostat").unwrap()
 }
 
 #[test]

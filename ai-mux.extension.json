@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1",
+  "id": "ai-mux.repostat",
+  "name": "ai-mux Repostat",
+  "version": "0.9.0",
+  "dataVersion": 1,
+  "roles": ["tool"],
+  "engine": ">=0.10.2 <1.0.0",
+  "protocol": "1.0",
+  "entrypoint": {
+    "command": "repostat",
+    "args": ["extension"]
+  },
+  "runtimeFiles": [
+    "repostat",
+    "ai-mux.extension.json",
+    "schemas/repostat-metrics-v1.schema.json"
+  ],
+  "commands": ["repostat.scan"],
+  "provides": ["ai-mux.repostat.analyze"],
+  "requires": [],
+  "engineCapabilities": [],
+  "permissions": {
+    "repository.read": true
+  },
+  "artifactTypes": ["repostat.metrics.v1"]
+}

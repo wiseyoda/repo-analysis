@@ -3,6 +3,7 @@
 **Requirement IDs:** Phase 9 (risk scoring prerequisite)
 **Phase:** 9
 **Date:** 2026-03-20
+**Determinism revision:** 2026-07-26 (ADR-008)
 
 ## Purpose
 
@@ -15,12 +16,12 @@ Files changed frequently are higher risk, especially when also complex.
 
 ## Outputs
 
-- `BTreeMap<PathBuf, usize>` — file path → commit count in last 6 months
+- `BTreeMap<PathBuf, usize>` — file path → commit count in all reachable history
 - `None` if not a git repo or git unavailable
 
 ## Behavior
 
-1. Run `git log --format="" --name-only --since="6 months ago"`
+1. Run `git log --format="" --name-only`
 2. Parse output: each non-empty line is a file path
 3. Count occurrences per file path
 4. Return the map
@@ -38,5 +39,6 @@ Files changed frequently are higher risk, especially when also complex.
 - [ ] Returns BTreeMap<PathBuf, usize> with commit counts per file
 - [ ] Single git command (not per-file queries)
 - [ ] Returns None for non-git directories
-- [ ] Returns Some(empty) for repos with no recent commits
+- [ ] Returns Some(empty) for repos with no commits
 - [ ] Skips blank lines in git output
+- [ ] Commits remain counted regardless of their wall-clock age
