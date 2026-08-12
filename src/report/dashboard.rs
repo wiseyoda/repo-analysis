@@ -377,7 +377,7 @@ fn render_language_breakdown(agg: &AggregateMetrics, cw: &mut ColorWriter) -> io
     let total_code = agg.total_lines.code_lines.max(1);
 
     let mut langs: Vec<_> = agg.by_language.iter().collect();
-    langs.sort_by(|a, b| b.1.lines.code_lines.cmp(&a.1.lines.code_lines));
+    langs.sort_by_key(|b| std::cmp::Reverse(b.1.lines.code_lines));
 
     for (lang, metrics) in &langs {
         let pct = (metrics.lines.code_lines as f64 / total_code as f64) * 100.0;
