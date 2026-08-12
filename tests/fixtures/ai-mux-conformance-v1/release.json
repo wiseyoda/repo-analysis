@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1",
+  "release": "1.0.0-rc.1",
+  "protocolSchemaHash": "bb33b84968522aad60993c3459d67a45bd82e03ddc86e30d4d56238af2b80b5a",
+  "packageSha256": "03a8e7ec8d5bad0e43a74bba29a074813a4d96ca46b17532bb024a845da92f2c",
+  "files": {
+    "cases.json": "e770eaa69ff47bce6099334a353c00d6a6334885a01a0b6773002398e1eebcc1",
+    "fake-tool-result.schema.json": "36e9def5252c2be1ac5a0caa9a02fae6f8fda0d9222b577cbcea12a054c46ba1",
+    "fake-tool.mjs": "5884dc93df834d8e91711d4aa4e008f4be0592ef625e0c0cc7907c6115585f10",
+    "fake-workflow.mjs": "8269cdfd996f114993aabae66edc5a0ddfea9c6697822c7f6fc78aec80ecc13c",
+    "materialize-repository.mjs": "f5ea75072df40c2bae3dd6d068135b1a51196177c57eee87b1f948e4b0042beb",
+    "protocol-release.json": "4b40f86725492940410e06e618fde1f7b1bb8375c5c66ab972ed97156a50ecfe",
+    "repository/README.md": "414c7145598fd6a710e8fecc667ebac2b89265edf68db5b36b433828bbaf7037",
+    "repository/dirty.txt": "e4a8f3cf6b5d3a52722a0205b78ba6c3faac38d95a38edfa911f655b45bb7406",
+    "repository/src/query.ts": "cb7d063c34f5c4b4eac3401b6055280a5acf5ae9a5ab9302fcbad89bed8c1088"
+  }
+}

@@ -6,7 +6,8 @@
 ## Phase 1: Foundation & Core Metrics
 
 **Goal**: `repostat ./path` produces accurate line counts, language breakdown, and file
-statistics with a terminal dashboard. Snapshots are stored and diffed.
+statistics with a terminal dashboard. Snapshots are explicitly stored and
+diffed with `--save`.
 
 - [x] Project scaffold: `Cargo.toml`, module structure, CI config
 - [x] CLI argument parsing with `clap` (path argument, `--help`, `--version`)
@@ -16,7 +17,7 @@ statistics with a terminal dashboard. Snapshots are stored and diffed.
 - [x] Line counting engine: code, comments, blanks — per file, per language
 - [x] Generated/minified file detection and exclusion
 - [x] Metric aggregation: totals, per-language breakdowns, file counts
-- [x] Snapshot storage: write JSON to `.repostat/snapshots/`
+- [x] Explicit snapshot storage: `--save` writes JSON to `.repostat/snapshots/`
 - [x] Snapshot diffing: compare current run to most recent snapshot
 - [x] Terminal dashboard: compact box-drawn output with all Phase 1 metrics
 - [x] `--json` flag for machine-readable output
@@ -79,7 +80,10 @@ graph identifies the most-connected modules.
 
 ---
 
-## Phase 5: AI-Augmented Analysis
+## Historical Phase 5: AI-Augmented Analysis
+
+> Shipped in v0.6.0 and retained as historical snapshot compatibility. ADR-008
+> retired direct model execution; future enrichment belongs to Engine.
 
 **Goal**: Claude CLI integration for architecture, features, quality, and effort estimation.
 
@@ -137,7 +141,10 @@ README is complete. The tool can analyze its own codebase.
 
 ---
 
-## Phase 9: Developer Health Check
+## Historical Phase 9: Developer Health Check
+
+> Shipped in v0.9.0. Direct AI execution and `REPOSTAT_SKIP_AI` entries below
+> are historical; ADR-008 removes them from current execution.
 
 **Goal**: Risk scoring, parallel AI, health exit codes, init command, diff mode, HTML output.
 See `docs/designs/phase-9-health-check.md` for full design.
@@ -167,3 +174,28 @@ See `docs/designs/phase-9-health-check.md` for full design.
 Exit codes distinguish health (10/20) from errors (1). `repostat init` creates
 commented config. `repostat diff HEAD~5` shows changed-file metrics. HTML output
 is self-contained SVG. Integration tests < 10s. All bug fixes verified.
+
+---
+
+## Suite Integration: Deterministic Tool
+
+**Goal**: Standalone CLI and ai-mux Engine use one token-free, no-write scanner
+and receive identical `repostat.metrics.v1` results.
+
+- [x] Default scan starts no provider/model process
+- [x] Default, JSON, Markdown, and extension scans write no state
+- [x] `--save` is the explicit snapshot/index write
+- [x] Stable timestamp-free JSON result and closed schema
+- [x] Canonical target root and target Git SHA
+- [x] Wall-clock-independent churn and deterministic tie ordering
+- [x] User-global Git ignore isolation
+- [x] Thin `repostat extension` adapter
+- [x] Byte-identical standalone/extension fixture proof
+- [x] Suite extension manifest and corrected distribution metadata
+- [x] Engine captures adapter stdout as an immutable artifact (local Candidate)
+- [x] Closed release runtime staging with exact files and normalized modes
+- [ ] Immutable installed standalone/Engine parity proof
+
+**Exit Criteria**: Rust verification, provider mutation traps, recursive
+no-write fingerprints, standalone/extension byte parity, Engine artifact
+capture, and installed-package conformance all pass.

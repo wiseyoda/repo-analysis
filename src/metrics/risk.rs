@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 pub(crate) struct RiskEntry {
     /// File path (relative to repo root).
     pub(crate) file: String,
-    /// Number of commits touching this file in the last 6 months.
+    /// Number of commits touching this file across all reachable history.
     pub(crate) churn_count: usize,
     /// Maximum cyclomatic complexity of any function in this file.
     pub(crate) max_complexity: usize,
@@ -42,7 +42,11 @@ pub(crate) fn compute_risk_scores(
         .filter(|e| e.risk_score > 0)
         .collect();
 
-    entries.sort_by(|a, b| b.risk_score.cmp(&a.risk_score));
+    entries.sort_by(|a, b| {
+        b.risk_score
+            .cmp(&a.risk_score)
+            .then_with(|| a.file.cmp(&b.file))
+    });
     entries
 }
 

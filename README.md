@@ -1,6 +1,7 @@
 # repostat
 
-Fast CLI for repository complexity analysis, progress tracking, and AI-augmented insights. Built in Rust.
+Fast, deterministic repository complexity and health analysis. Repostat is
+token-free and read-only by default.
 
 ## What It Does
 
@@ -10,8 +11,8 @@ Point it at any repo. Get back:
 - **Complexity** -- cyclomatic + cognitive complexity via tree-sitter (10 languages)
 - **Dependencies** -- direct + transitive counts from manifests and lockfiles (8 ecosystems)
 - **Documentation** -- coverage ratio, README completeness, per-directory coverage
-- **AI insights** -- architecture summary, feature inventory, effort estimation (via Claude CLI)
-- **Progress tracking** -- JSON snapshots with sparkline trends over time
+- **Stable JSON** -- versioned `repostat.metrics.v1` output for tools and CI
+- **Progress tracking** -- opt-in JSON snapshots with sparkline trends over time
 - **Cross-repo index** -- track all analyzed repos from one place
 
 Smart enough to skip `node_modules`, `vendor`, `build`, generated files, and minified code.
@@ -21,8 +22,8 @@ Smart enough to skip `node_modules`, `vendor`, `build`, generated files, and min
 ### From source
 
 ```bash
-git clone https://github.com/wiseyoda/repo-analysis.git
-cd repo-analysis
+git clone https://github.com/wiseyoda/ai-mux-repostat.git
+cd ai-mux-repostat
 cargo build --release
 cp target/release/repostat ~/.local/bin/
 ```
@@ -32,6 +33,21 @@ cp target/release/repostat ~/.local/bin/
 ```bash
 cargo install repostat
 ```
+
+### Prepare an ai-mux suite runtime
+
+The repository gate builds the locked release binary. Stage the exact closed
+runtime root before Engine packages it:
+
+```bash
+./scripts/verify.sh
+./scripts/prepare-suite-runtime.sh /path/to/new/repostat-runtime
+```
+
+The staging command does not install, sign, publish, or contact a provider. It
+copies only the binary, extension manifest, and result schema into a new
+private directory with normalized modes. Engine owns package provenance,
+hashing, trust approval, installation, update, rollback, and run binding.
 
 ### Shell completions
 
@@ -49,14 +65,17 @@ repostat completions fish > ~/.config/fish/completions/repostat.fish
 ## Usage
 
 ```bash
-# Analyze a repo (default: current directory)
+# Read-only analysis (default: current directory)
 repostat ./path/to/repo
 
-# JSON output for scripts
-repostat -j ./path/to/repo
+# Stable, byte-reproducible JSON for scripts
+repostat --json --no-write ./path/to/repo
 
-# Markdown report
+# Markdown to stdout
 repostat -m ./path/to/repo
+
+# Explicitly save history and update the cross-repo index
+repostat --save ./path/to/repo
 
 # View trends over time (sparkline charts)
 repostat trend ./path/to/repo
@@ -66,6 +85,9 @@ repostat list
 
 # Generate man page
 repostat manpage > repostat.1
+
+# Suite tool adapter; JSON-only stdout, no writes
+repostat extension ./path/to/repo
 ```
 
 ## How It Works
@@ -73,9 +95,22 @@ repostat manpage > repostat.1
 1. **Scan** -- Walk the file tree, respect `.gitignore`, detect languages, exclude generated code
 2. **Measure** -- Count lines, calculate complexity, parse dependency manifests
 3. **Document** -- Score README completeness, measure doc-to-code ratio
-4. **Analyze** -- (Optional) Claude CLI generates architecture summary and effort estimates
-5. **Store** -- Save a JSON snapshot in `.repostat/snapshots/`
-6. **Report** -- Compact terminal dashboard with delta from last run and sparkline trends
+4. **Report** -- Emit a compact dashboard, Markdown, HTML, or stable JSON
+5. **Store when asked** -- `--save` writes `.repostat/snapshots/` and updates the index
+
+Repostat never starts a model. Optional AI enrichment belongs to an explicit
+ai-mux Engine workflow so token use, accounts, validation, and artifacts remain
+visible to the control plane.
+
+## Write Behavior
+
+Ordinary analysis, `--json`, `--markdown`, and `extension` do not write to the
+target repository or Repostat's global data directory.
+
+- `--save` explicitly writes snapshot history and the cross-repo index.
+- `--html` explicitly exports `repostat-report.html` to the target.
+- `--no-write` enforces the read-only contract and conflicts with both write
+  flags.
 
 ## Dogfooding
 
@@ -100,8 +135,11 @@ README score: 4/5, Dir coverage: 2/6
 Create `.repostat.toml` in your repo root:
 
 ```toml
-exclude_patterns = ["generated/**", "vendor/**"]
-include_patterns = ["vendor/important.rs"]
+[exclude]
+patterns = ["generated/**", "vendor/**"]
+
+[include]
+patterns = ["vendor/important.rs"]
 ```
 
 ## Project Status
@@ -112,9 +150,11 @@ include_patterns = ["vendor/important.rs"]
 | 2. Complexity Analysis | Shipped (v0.3.0) |
 | 3. Dependency & Coupling | Shipped (v0.4.0) |
 | 4. Documentation Analysis | Shipped (v0.5.0) |
-| 5. AI-Augmented Analysis | Shipped (v0.6.0) |
+| 5. Direct AI analysis | Historical v0.6.0 behavior; retired from execution |
 | 6. History & Trends | Shipped (v0.7.0) |
 | 7. Polish & Distribution | Shipped (v0.8.0) |
+| 9. Developer Health Check | Shipped (v0.9.0) |
+| Suite deterministic tool boundary | Candidate on `codex/suite-integration` |
 
 ## Contributing
 
@@ -127,7 +167,8 @@ Read [docs/constitution.md](docs/constitution.md) first. Then:
 5. Open a PR
 
 `scripts/verify.sh` is the repository verification entrypoint. It runs
-`cargo fmt --check`, Clippy with warnings denied, and the complete test suite.
+`cargo fmt --check`, Clippy with warnings denied, the complete test suite, and
+the locked release build required by suite packaging.
 
 ## License
 

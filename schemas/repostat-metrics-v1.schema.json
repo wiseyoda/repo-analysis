@@ -1,0 +1,189 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.ai-mux.local/repostat/v1/repostat-metrics-v1.schema.json",
+  "title": "Repostat Deterministic Metrics V1",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "type": "string", "const": "1" },
+    "artifactType": { "type": "string", "const": "repostat.metrics.v1" },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "canonicalRoot": { "type": "string", "pattern": "^/" },
+        "gitSha": {
+          "type": ["string", "null"],
+          "pattern": "^[a-f0-9]{40,64}$"
+        }
+      },
+      "required": ["canonicalRoot", "gitSha"]
+    },
+    "totalFiles": { "type": "integer", "minimum": 0 },
+    "totalLines": { "$ref": "#/$defs/lineMetrics" },
+    "byLanguage": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/languageMetrics" }
+    },
+    "hotspots": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/hotspot" },
+      "maxItems": 10
+    },
+    "dependencies": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/dependencies" }
+      ]
+    },
+    "documentation": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/documentation" }
+      ]
+    },
+    "skippedFiles": { "type": "integer", "minimum": 0 },
+    "riskHotspots": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/riskHotspot" }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "artifactType",
+    "source",
+    "totalFiles",
+    "totalLines",
+    "byLanguage",
+    "hotspots",
+    "dependencies",
+    "documentation",
+    "skippedFiles",
+    "riskHotspots"
+  ],
+  "$defs": {
+    "lineMetrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "total": { "type": "integer", "minimum": 0 },
+        "code": { "type": "integer", "minimum": 0 },
+        "blank": { "type": "integer", "minimum": 0 },
+        "comment": { "type": "integer", "minimum": 0 }
+      },
+      "required": ["total", "code", "blank", "comment"]
+    },
+    "languageMetrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "files": { "type": "integer", "minimum": 0 },
+        "lines": { "$ref": "#/$defs/lineMetrics" }
+      },
+      "required": ["files", "lines"]
+    },
+    "hotspot": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "file": { "type": "string" },
+        "function": { "type": "string" },
+        "cyclomatic": { "type": "integer", "minimum": 0 },
+        "cognitive": { "type": "integer", "minimum": 0 },
+        "lines": { "type": "integer", "minimum": 0 }
+      },
+      "required": ["file", "function", "cyclomatic", "cognitive", "lines"]
+    },
+    "dependencies": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "manifestCount": { "type": "integer", "minimum": 0 },
+        "direct": { "type": "integer", "minimum": 0 },
+        "transitive": { "type": ["integer", "null"], "minimum": 0 },
+        "manifests": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "name": { "type": "string" },
+              "ecosystem": { "type": "string" },
+              "deps": { "type": "integer", "minimum": 0 }
+            },
+            "required": ["name", "ecosystem", "deps"]
+          }
+        }
+      },
+      "required": ["manifestCount", "direct", "transitive", "manifests"]
+    },
+    "documentation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "fileCount": { "type": "integer", "minimum": 0 },
+        "totalLines": { "type": "integer", "minimum": 0 },
+        "totalChars": { "type": "integer", "minimum": 0 },
+        "docToCodeRatio": { "type": "number", "minimum": 0 },
+        "readmeScore": { "type": "number", "minimum": 0, "maximum": 1 },
+        "readmeSections": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "dirCoverage": { "type": "number", "minimum": 0, "maximum": 1 }
+      },
+      "required": [
+        "fileCount",
+        "totalLines",
+        "totalChars",
+        "docToCodeRatio",
+        "readmeScore",
+        "readmeSections",
+        "dirCoverage"
+      ]
+    },
+    "riskHotspot": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "file": { "type": "string" },
+        "churnCount": { "type": "integer", "minimum": 0 },
+        "maxComplexity": { "type": "integer", "minimum": 0 }
+      },
+      "required": ["file", "churnCount", "maxComplexity"]
+    }
+  },
+  "examples": [
+    {
+      "schemaVersion": "1",
+      "artifactType": "repostat.metrics.v1",
+      "source": {
+        "canonicalRoot": "/tmp/fixture",
+        "gitSha": null
+      },
+      "totalFiles": 1,
+      "totalLines": {
+        "total": 3,
+        "code": 3,
+        "blank": 0,
+        "comment": 0
+      },
+      "byLanguage": {
+        "Rust": {
+          "files": 1,
+          "lines": {
+            "total": 3,
+            "code": 3,
+            "blank": 0,
+            "comment": 0
+          }
+        }
+      },
+      "hotspots": [],
+      "dependencies": null,
+      "documentation": null,
+      "skippedFiles": 0,
+      "riskHotspots": []
+    }
+  ]
+}

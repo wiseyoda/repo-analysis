@@ -87,7 +87,7 @@ fn write_language_chart(agg: &AggregateMetrics, w: &mut dyn Write) -> io::Result
     writeln!(w, "<h2>Language Breakdown</h2>")?;
 
     let mut langs: Vec<_> = agg.by_language.iter().collect();
-    langs.sort_by(|a, b| b.1.lines.code_lines.cmp(&a.1.lines.code_lines));
+    langs.sort_by_key(|b| std::cmp::Reverse(b.1.lines.code_lines));
 
     let max_code = langs
         .first()

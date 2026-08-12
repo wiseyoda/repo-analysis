@@ -1,21 +1,21 @@
 class Repostat < Formula
-  desc "Analyze repository complexity, track coding progress, produce AI-augmented reports"
-  homepage "https://github.com/wiseyoda/repo-analysis"
-  version "0.7.0"
+  desc "Deterministic, token-free repository complexity and health analysis"
+  homepage "https://github.com/wiseyoda/ai-mux-repostat"
+  version "0.9.0"
   license "MIT"
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/wiseyoda/repo-analysis/releases/download/v#{version}/repostat-aarch64-apple-darwin.tar.gz"
+      url "https://github.com/wiseyoda/ai-mux-repostat/releases/download/v#{version}/repostat-aarch64-apple-darwin.tar.gz"
       # sha256 "UPDATE_WITH_ACTUAL_SHA256"
     else
-      url "https://github.com/wiseyoda/repo-analysis/releases/download/v#{version}/repostat-x86_64-apple-darwin.tar.gz"
+      url "https://github.com/wiseyoda/ai-mux-repostat/releases/download/v#{version}/repostat-x86_64-apple-darwin.tar.gz"
       # sha256 "UPDATE_WITH_ACTUAL_SHA256"
     end
   end
 
   on_linux do
-    url "https://github.com/wiseyoda/repo-analysis/releases/download/v#{version}/repostat-x86_64-unknown-linux-gnu.tar.gz"
+    url "https://github.com/wiseyoda/ai-mux-repostat/releases/download/v#{version}/repostat-x86_64-unknown-linux-gnu.tar.gz"
     # sha256 "UPDATE_WITH_ACTUAL_SHA256"
   end
 

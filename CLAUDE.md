@@ -4,8 +4,10 @@
 
 ## Project
 
-`repostat` is a Rust CLI tool that analyzes repository complexity, tracks coding progress
-over time, and produces AI-augmented reports. See `ROADMAP.md` for current phase.
+`repostat` is a deterministic Rust CLI and ai-mux tool provider. It analyzes
+repository complexity without tokens or writes by default; history writes are
+explicit, and optional AI enrichment belongs to ai-mux Engine. See `ROADMAP.md`
+for current work.
 
 ## Mandatory Reading
 
@@ -93,9 +95,11 @@ src/
   cli.rs           → Argument definitions
   config.rs        → .repostat.toml parsing
   errors.rs        → Error types (thiserror)
+  analysis.rs      → Shared deterministic scanner orchestration
+  result.rs        → Stable repostat.metrics.v1 output
   scanner/         → File walking, language detection, exclusions
   metrics/         → LOC counting, complexity, dependencies
-  ai/              → Claude CLI invocation, skill files, response parsing
+  ai/              → Historical snapshot schema compatibility only
   snapshot/        → JSON snapshot read/write/diff
   report/          → Dashboard, markdown, trends
 ```
@@ -104,11 +108,11 @@ src/
 
 - **Rust** for speed and single-binary distribution (ADR-001)
 - **Tree-sitter** for multi-language complexity analysis (ADR-002)
-- **Claude CLI** (`claude -p`) for AI analysis, not direct API (ADR-003)
 - **JSON files** for snapshot storage, not SQLite (ADR-004)
 - **Three-layer exclusions**: gitignore → heuristics → config (ADR-005)
-- **Skill files** in `~/.repostat/skills/` for AI prompts (ADR-006)
-- **Fast model always** for AI analysis speed (ADR-007)
+- **Deterministic no-write analysis** for standalone and suite use (ADR-008)
+- **Engine-owned AI enrichment**; Repostat starts no model or provider (ADR-008)
+- **Stable structured output** shared byte-for-byte by `--json` and `extension`
 
 ## What NOT To Do
 

@@ -1,5 +1,9 @@
 # Spec: REPOSTAT_SKIP_AI Environment Variable
 
+> Superseded by
+> [Deterministic Suite Tool](deterministic-suite-tool.md). Repostat no longer
+> invokes AI during analysis, so this compatibility switch has no effect.
+
 **Requirement IDs:** R-X08 (performance)
 **Phase:** 9
 **Date:** 2026-03-20

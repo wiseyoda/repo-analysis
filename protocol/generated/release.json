@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "1",
+  "release": "1.0.0-rc.1",
+  "wireProtocol": "1.0",
+  "status": "release-candidate",
+  "schemaPackageSha256": "bb33b84968522aad60993c3459d67a45bd82e03ddc86e30d4d56238af2b80b5a",
+  "breakingChangesRequireAdr": true,
+  "schemaFiles": {
+    "artifact.schema.json": "5881ae2153700e3125eed25b319cd0c44e1a83c054a098ad0f21b915889f0ce1",
+    "canonical-run.schema.json": "1efd5a3c14cb397235699fc661815d3664c37187fdda7d2f0fa56994a167d029",
+    "extension-manifest.schema.json": "02f00b65e3612a97d47faf5e64db48689760a8f25ebbc710d6bc202886c8d4c4",
+    "initialize.schema.json": "7478fa97488866cc40f941e0e4321ca5307f6f7086e2146ee4d6b315e80b03a3",
+    "initialized.schema.json": "f21a1b943cf2144f81b3f347ea787f8f69720c7f64aca78f78cf43b2758eee10",
+    "protocol-error.schema.json": "74f716a2bdb64f393f3e04a8977c9668e4c08251c38ffc437cbb1ecf2115ea15",
+    "protocol-message.schema.json": "e6df8da3a55d21449e11dd4002dbd34cc286787deefad8fe5526264f00d7622f",
+    "run-event.schema.json": "86ffa1ba977037458bcc66d130824b4f3e728e32eea15ce84744e3777e1faddd"
+  }
+}

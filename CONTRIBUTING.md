@@ -3,8 +3,8 @@
 ## Quick Start
 
 ```bash
-git clone https://github.com/wiseyoda/repo-analysis.git
-cd repo-analysis
+git clone https://github.com/wiseyoda/ai-mux-repostat.git
+cd ai-mux-repostat
 cargo build
 cargo test
 ```

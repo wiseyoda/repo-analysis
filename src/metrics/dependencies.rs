@@ -24,6 +24,8 @@ const EXCLUDE_DIRS: &[&str] = &[
     "build",
     "dist",
     ".next",
+    ".repostat",
+    "repostat-report.html",
     "Pods",
     "target",
     ".git",

@@ -14,23 +14,24 @@
 ## Phase 1: Foundation & Core Metrics
 
 > Goal: `repostat ./path` produces accurate line counts, language breakdown, and file statistics
-> with a terminal dashboard. Snapshots are stored. The skeleton is tested and shippable.
+> with a terminal dashboard. Analysis is read-only unless history is explicitly
+> saved. The skeleton is tested and shippable.
 
 | ID | Requirement | Priority |
 |----|-------------|----------|
 | R-001 | CLI accepts a path argument and validates it exists and is a directory | P0 |
 | R-002 | Recursive file walker respects `.gitignore` rules | P0 |
-| R-003 | Built-in heuristic exclusions: `node_modules`, `vendor`, `build`, `dist`, `.next`, `Pods`, `target`, `.git`, `__pycache__`, `.venv`, `venv` | P0 |
+| R-003 | Built-in heuristic exclusions: `node_modules`, `vendor`, `build`, `dist`, `.next`, `.repostat`, `repostat-report.html`, `Pods`, `target`, `.git`, `__pycache__`, `.venv`, `venv` | P0 |
 | R-004 | Detect minified files (avg line length > 200 chars) and generated files (header comments) and exclude from user code metrics | P0 |
 | R-005 | `.repostat.toml` config file support for custom include/exclude patterns | P0 |
 | R-006 | Line counting: total lines, code lines, blank lines, comment lines — per file and aggregated per language | P0 |
 | R-007 | Language detection by file extension with a curated mapping (50+ languages) | P0 |
 | R-008 | Language breakdown: percentage of codebase per language, file count per language | P0 |
 | R-009 | Terminal dashboard output: compact box-drawn display fitting one screen | P0 |
-| R-010 | JSON snapshot storage in `.repostat/snapshots/` with timestamp, git SHA (if available), all metrics, and config used | P0 |
-| R-011 | Auto-diff: show delta vs most recent snapshot at bottom of dashboard | P0 |
-| R-012 | `--markdown` flag generates a Markdown report file | P1 |
-| R-013 | `--json` flag outputs raw JSON to stdout | P1 |
+| R-010 | Explicit `--save` snapshot storage in `.repostat/snapshots/` with timestamp, git SHA (if available), all metrics, and config used | P0 |
+| R-011 | Saved-history mode shows delta vs the most recent snapshot | P0 |
+| R-012 | `--markdown` outputs a Markdown report to stdout | P1 |
+| R-013 | `--json` outputs stable `repostat.metrics.v1` JSON to stdout | P1 |
 | R-014 | Parallel file traversal using rayon for multi-core performance | P1 |
 | R-015 | Colored terminal output with graceful fallback for non-color terminals | P1 |
 | R-016 | `--help` with clear usage examples and flag descriptions | P0 |
@@ -78,10 +79,11 @@
 | R-304 | Stale doc detection (AI): identify docs referencing functions/files that no longer exist | P1 |
 | R-305 | Doc quality scoring (AI): clarity, completeness, accuracy rating | P2 |
 
-## Phase 5: AI-Augmented Analysis
+## Historical Phase 5: AI-Augmented Analysis
 
-> Goal: Claude CLI integration for architecture summary, feature inventory, quality review,
-> and effort estimation.
+> These requirements describe shipped v0.6.0 history. ADR-008 supersedes their
+> execution: Repostat retains old snapshot types but starts no model. Any future
+> enrichment is an explicit ai-mux Engine workflow.
 
 | ID | Requirement | Priority |
 |----|-------------|----------|
@@ -121,6 +123,33 @@
 | R-604 | GitHub Releases with pre-built binaries (macOS arm64/x64, Linux x64) | P1 |
 | R-605 | CI pipeline: test, lint, format, clippy on every PR | P0 |
 | R-606 | README with install instructions, usage examples, and screenshots | P0 |
+
+## Suite Integration: Deterministic Tool
+
+> Goal: Repostat is the read-only `repostat.metrics.v1` tool used identically
+> from standalone CLI and ai-mux Engine.
+
+| ID | Requirement | Priority |
+|----|-------------|----------|
+| R-1000 | Default analysis never invokes a provider or model process | P0 |
+| R-1001 | Default analysis writes neither target-repository nor global Repostat state | P0 |
+| R-1002 | `--save` is the explicit snapshot and index write | P0 |
+| R-1003 | `--no-write` conflicts with snapshot and HTML writes | P0 |
+| R-1004 | `--json` emits stable, timestamp-free `repostat.metrics.v1` | P0 |
+| R-1005 | Structured output identifies the canonical target and its Git SHA | P0 |
+| R-1006 | Unchanged inputs produce byte-identical structured output | P0 |
+| R-1007 | `repostat extension` is a JSON-only, no-write tool adapter | P0 |
+| R-1008 | Standalone and extension results are byte-identical | P0 |
+| R-1009 | A closed result schema and extension manifest ship with the binary | P0 |
+| R-1010 | Churn and risk inputs are independent of wall-clock time | P1 |
+| R-1011 | User-global Git ignore configuration cannot change scan results | P1 |
+| R-1012 | Distribution metadata uses `wiseyoda/ai-mux-repostat` | P1 |
+| R-1013 | Generated Protocol V1 RC Rust helpers, schema descriptors, conformance fixtures, and aggregate hash are vendored without an Engine checkout dependency | P0 |
+| R-1014 | A repository-owned command stages exactly the release binary, extension manifest, and result schema into a new private runtime root | P0 |
+| R-1015 | Runtime staging requires an existing executable binary and never builds, installs, signs, publishes, or mutates source state implicitly | P0 |
+| R-1016 | Runtime staging normalizes the binary to mode `0500` and data files to `0400` before Engine package hashing | P0 |
+| R-1017 | Runtime staging refuses an existing destination and publishes the completed root by atomic rename | P0 |
+| R-1018 | The staged root is source input only; Engine owns source metadata, package hashing, trust, installation, lifecycle, and run binding | P0 |
 
 ## Cross-Cutting Requirements
 
