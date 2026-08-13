@@ -107,7 +107,7 @@ manifest/schema fields, and distribution metadata.
 The untracked `.code-review-agent/` directory and `REVIEW.md` predate this
 integration branch. They are intentionally neither modified nor staged.
 
-## Remaining Cross-repository Evidence
+## Historical remaining cross-repository evidence
 
 - Engine commit `f817c45` validates the manifest and result contract, invokes
   the adapter through its durable supervisor, and captures the exact stdout as
@@ -118,9 +118,11 @@ integration branch. They are intentionally neither modified nor staged.
   2,212 bytes.
 - Engine validates the declared `repository.read` permission and detects target
   mutation, but OS-level runtime sandbox enforcement remains incomplete.
-- Standalone and Engine invocation must pass parity from immutable installed
-  release-candidate artifacts.
-- Publishing, pushing, installation, and live-provider work remain unapproved.
+- Standalone and Engine invocation had not yet passed parity from immutable
+  installed release-candidate artifacts.
+- Publishing, pushing, installation, and live-provider work were unapproved at
+  that checkpoint.
 
-RPS-01 and RPS-02 are local Candidates. Neither is Accepted or shipped until
-immutable installed release-candidate parity and runtime sandbox evidence pass.
+At that checkpoint RPS-01 and RPS-02 were local Candidates. The installed
+release and parity evidence at the top of this handoff supersede that status;
+Repostat remains provider-free and requires no live-provider exception.
