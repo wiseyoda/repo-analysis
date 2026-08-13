@@ -1,6 +1,20 @@
 # Repostat Suite Integration Handoff
 
-## Immutable runtime checkpoint — 2026-07-27
+## Installed release — 2026-08-12
+
+Repostat 0.9.0 is published on `main` and active from immutable package
+`b9589e8b5c6734acdee2a5f00f650306f6a300ff648e8e160d0f72a96478cbe0`.
+Suite doctor is green. The installed Engine resolves this package without a
+source checkout or caller-selected executable.
+
+Installed root `019ff8d8-4b9e-7000-8209-1348bce0c539` completed the exact
+eight-event terminal sequence. Artifact
+`019ff8d8-4dff-7000-ac2e-5e3703867fed` was read back through the canonical API:
+17,668 bytes, SHA-256
+`9ab81fded71bb155d2a4b5cc52934d7b7d16fcfa5137bdcdc4718df8ae27d1dc`.
+The target repository status fingerprint was identical before and after.
+
+## Historical immutable-runtime checkpoint — 2026-07-27
 
 - Repostat commit `62e7aa4` adds a closed runtime-staging command. Its exact
   full gate now runs rustfmt, Clippy with warnings denied, 228 unit tests, 15
@@ -93,7 +107,7 @@ manifest/schema fields, and distribution metadata.
 The untracked `.code-review-agent/` directory and `REVIEW.md` predate this
 integration branch. They are intentionally neither modified nor staged.
 
-## Remaining Cross-repository Evidence
+## Historical remaining cross-repository evidence
 
 - Engine commit `f817c45` validates the manifest and result contract, invokes
   the adapter through its durable supervisor, and captures the exact stdout as
@@ -104,9 +118,11 @@ integration branch. They are intentionally neither modified nor staged.
   2,212 bytes.
 - Engine validates the declared `repository.read` permission and detects target
   mutation, but OS-level runtime sandbox enforcement remains incomplete.
-- Standalone and Engine invocation must pass parity from immutable installed
-  release-candidate artifacts.
-- Publishing, pushing, installation, and live-provider work remain unapproved.
+- Standalone and Engine invocation had not yet passed parity from immutable
+  installed release-candidate artifacts.
+- Publishing, pushing, installation, and live-provider work were unapproved at
+  that checkpoint.
 
-RPS-01 and RPS-02 are local Candidates. Neither is Accepted or shipped until
-immutable installed release-candidate parity and runtime sandbox evidence pass.
+At that checkpoint RPS-01 and RPS-02 were local Candidates. The installed
+release and parity evidence at the top of this handoff supersede that status;
+Repostat remains provider-free and requires no live-provider exception.
